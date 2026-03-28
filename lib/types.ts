@@ -19,6 +19,9 @@ export interface VisaStep {
 export interface UserProfile {
   country_of_origin: string
   visa_type: string
+  currently_in_us?: boolean
+  was_in_us_last_tax_year?: boolean
+  had_us_income_last_tax_year?: boolean
   degree_level?: string
   i20_issue_date?: string
   opt_start_date?: string
@@ -44,4 +47,16 @@ export interface DeadlineInfo {
   date: Date
   daysRemaining: number
   urgency: UrgencyLevel
+}
+
+export type TaxDeadlineStatus = 'due_now' | 'upcoming' | 'overdue'
+
+export interface TaxGuidance {
+  taxYear: number
+  deadline: string
+  status: TaxDeadlineStatus
+  forms: string[]
+  summary: string
+  details: string[]
+  officialLinks: Array<{ label: string; url: string }>
 }

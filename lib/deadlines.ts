@@ -6,6 +6,10 @@ export function calculateDeadline(
 ): DeadlineInfo | null {
   if (!step.deadline_days || !step.deadline_trigger) return null
 
+  // STEM OPT needs a dedicated extension timeline, not the student's original I-20 date.
+  // Until we collect that later-phase data, only surface the pre-graduation OPT deadline.
+  if (step.id === 'stem_opt') return null
+
   const triggerValue = profile[step.deadline_trigger as keyof UserProfile]
   if (!triggerValue || typeof triggerValue !== 'string') return null
 

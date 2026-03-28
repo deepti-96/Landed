@@ -8,45 +8,6 @@ import { loadRoadmapFromSupabase, saveRoadmapToLocalStorage, saveRoadmapToSupaba
 import { CheckCircle2, KeyRound, Mail, Plane } from 'lucide-react'
 
 const VISA_TYPES = ['F-1', 'J-1', 'H-1B', 'O-1', 'L-1', 'Other']
-const COUNTRIES = [
-  'Afghanistan',
-  'Argentina',
-  'Australia',
-  'Bangladesh',
-  'Brazil',
-  'Canada',
-  'Chile',
-  'China',
-  'Colombia',
-  'Egypt',
-  'France',
-  'Germany',
-  'Ghana',
-  'India',
-  'Indonesia',
-  'Iran',
-  'Italy',
-  'Japan',
-  'Kenya',
-  'Mexico',
-  'Nepal',
-  'Nigeria',
-  'Pakistan',
-  'Peru',
-  'Philippines',
-  'Saudi Arabia',
-  'South Africa',
-  'South Korea',
-  'Spain',
-  'Sri Lanka',
-  'Taiwan',
-  'Thailand',
-  'Turkey',
-  'United Arab Emirates',
-  'United Kingdom',
-  'Vietnam',
-  'Other',
-]
 const EMPLOYMENT_OPTIONS = [
   { value: 'none', label: 'Not working yet' },
   { value: 'on_campus', label: 'On-campus job' },
@@ -54,6 +15,7 @@ const EMPLOYMENT_OPTIONS = [
   { value: 'opt', label: 'OPT' },
   { value: 'stem_opt', label: 'STEM OPT' },
 ]
+const LAST_TAX_YEAR = new Date().getFullYear() - 1
 
 export default function IntakePage() {
   const router = useRouter()
@@ -66,6 +28,7 @@ export default function IntakePage() {
   const [codeSent, setCodeSent] = useState(false)
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Partial<UserProfile>>({
+    country_of_origin: 'United States',
     has_ssn: false,
     has_bank_account: false,
     has_address: false,
@@ -82,11 +45,17 @@ export default function IntakePage() {
     let isMounted = true
 
     getCurrentSession()
-      .then(currentSession => {
-        if (isMounted && currentSession) {
-          setSession(currentSession)
-          setEmail(currentSession.user.email ?? '')
-        }
+      .then(async currentSession => {
+        if (!isMounted || !currentSession) return
+
+        setSession(currentSession)
+        setEmail(currentSession.user.email ?? '')
+
+        const savedRoadmap = await loadRoadmapFromSupabase(supabase, currentSession).catch(() => null)
+        if (!isMounted || !savedRoadmap) return
+
+        setProfile(savedRoadmap.profile)
+        setAuthMessage('Signed in. Your saved profile is ready to review.')
       })
       .catch(() => {
         if (isMounted) setAuthMessage('Could not restore your session.')
@@ -188,8 +157,8 @@ export default function IntakePage() {
       return
     }
 
-    if (!profile.visa_type || !profile.country_of_origin) {
-      setError('Please fill in your visa type and country.')
+    if (!profile.visa_type || !profile.country_of_origin || profile.currently_in_us === undefined) {
+      setError('Please answer the required profile questions first.')
       return
     }
 
@@ -207,13 +176,14 @@ export default function IntakePage() {
 
       const { plan } = await res.json()
       saveRoadmapToLocalStorage(profile, plan)
+      router.push('/dashboard')
 
       const supabase = getSupabaseBrowserClient()
       if (supabase) {
-        await saveRoadmapToSupabase(supabase, session, profile, plan)
+        void saveRoadmapToSupabase(supabase, session, profile, plan).catch(error => {
+          console.error('Background roadmap save failed:', error)
+        })
       }
-
-      router.push('/dashboard')
     } catch (_e) {
       setError('Something went wrong. Check your API key and Supabase setup.')
       setLoading(false)
@@ -224,7 +194,13 @@ export default function IntakePage() {
     router.push('/dashboard')
   }
 
-  const YesNo = ({ label, field }: { label: string; field: keyof UserProfile }) => (
+  const YesNo = ({
+    label,
+    field,
+  }: {
+    label: string
+    field: keyof UserProfile
+  }) => (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
       <div className="flex gap-3">
@@ -256,7 +232,7 @@ export default function IntakePage() {
           <h1 className="text-2xl font-semibold text-gray-900">Landed</h1>
         </div>
         <p className="text-gray-500 text-sm mb-6 leading-relaxed">
-          Your personal roadmap through US immigration bureaucracy. Sign in with email first, then save your profile and roadmap.
+          Your personal roadmap for getting set up in the United States. Sign in first, then answer only the questions that match your situation.
         </p>
 
         <div className="mb-6 rounded-2xl border border-gray-200 bg-gray-50 p-4 space-y-3">
@@ -348,20 +324,9 @@ export default function IntakePage() {
 
         {session ? (
           <div className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Country of origin
-              </label>
-              <select
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gray-400 transition-colors"
-                onChange={e => update('country_of_origin', e.target.value)}
-                value={profile.country_of_origin || ''}
-              >
-                <option value="" disabled>Select your country</option>
-                {COUNTRIES.map(country => (
-                  <option key={country} value={country}>{country}</option>
-                ))}
-              </select>
+            <div className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Current scope</p>
+              <p className="text-sm text-gray-700">Landed is currently configured for people getting set up in the United States.</p>
             </div>
 
             <div>
@@ -380,39 +345,75 @@ export default function IntakePage() {
               </select>
             </div>
 
+            <YesNo label="Are you currently in the United States?" field="currently_in_us" />
+
             {profile.visa_type === 'F-1' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  I-20 issue date
-                </label>
-                <input
-                  type="date"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gray-400 transition-colors"
-                  onChange={e => update('i20_issue_date', e.target.value)}
-                  value={profile.i20_issue_date || ''}
-                />
-              </div>
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    I-20 issue date
+                  </label>
+                  <input
+                    type="date"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gray-400 transition-colors"
+                    onChange={e => update('i20_issue_date', e.target.value)}
+                    value={profile.i20_issue_date || ''}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Expected graduation date
+                  </label>
+                  <input
+                    type="date"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gray-400 transition-colors"
+                    onChange={e => update('graduation_date', e.target.value)}
+                    value={profile.graduation_date || ''}
+                  />
+                  <p className="text-xs text-gray-500 mt-2 leading-relaxed">
+                    We use this to time Post-OPT reminders and deadlines.
+                  </p>
+                </div>
+              </>
             )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Current employment status
-              </label>
-              <select
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gray-400 bg-white transition-colors"
-                onChange={e => update('employment_status', e.target.value)}
-                value={profile.employment_status || 'none'}
-              >
-                {EMPLOYMENT_OPTIONS.map(o => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            </div>
+            {profile.currently_in_us !== undefined && (
+              <>
+                <YesNo label={`Were you in the U.S. at any time during ${LAST_TAX_YEAR}?`} field="was_in_us_last_tax_year" />
+                {profile.was_in_us_last_tax_year && (
+                  <YesNo label={`Did you have any U.S. income during ${LAST_TAX_YEAR}?`} field="had_us_income_last_tax_year" />
+                )}
+              </>
+            )}
 
-            <YesNo label="Do you have a US bank account?" field="has_bank_account" />
-            <YesNo label="Do you have an SSN?" field="has_ssn" />
-            <YesNo label="Do you have an ITIN?" field="has_itin" />
-            <YesNo label="Do you have a US address?" field="has_address" />
+            {profile.currently_in_us ? (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Current employment status
+                  </label>
+                  <select
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gray-400 bg-white transition-colors"
+                    onChange={e => update('employment_status', e.target.value)}
+                    value={profile.employment_status || 'none'}
+                  >
+                    {EMPLOYMENT_OPTIONS.map(o => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <YesNo label="Do you have a U.S. bank account?" field="has_bank_account" />
+                <YesNo label="Do you have an SSN?" field="has_ssn" />
+                <YesNo label="Do you have an ITIN?" field="has_itin" />
+                <YesNo label="Do you have a U.S. address?" field="has_address" />
+              </>
+            ) : profile.currently_in_us === false ? (
+              <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-4 py-4 text-sm text-gray-500 leading-relaxed">
+                U.S.-specific setup questions like bank account, SSN, ITIN, address, and current employment will appear after the user is already in the U.S. For now, we&apos;ll use your origin country, visa type, and arrival status to build the roadmap.
+              </div>
+            ) : null}
 
             {error && (
               <p className="text-red-500 text-sm bg-red-50 rounded-xl px-4 py-3">{error}</p>
@@ -420,7 +421,7 @@ export default function IntakePage() {
 
             <button
               onClick={handleSubmit}
-              disabled={loading || !profile.visa_type || !profile.country_of_origin}
+              disabled={loading || !profile.visa_type || !profile.country_of_origin || profile.currently_in_us === undefined}
               className="w-full bg-gray-900 text-white rounded-xl py-3 text-sm font-medium hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
               {loading ? (
@@ -435,7 +436,7 @@ export default function IntakePage() {
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-4 py-5 text-sm text-gray-500 leading-relaxed">
-            Sign in with your email code first. Once you are signed in, your profile dropdown selections will appear here and can be saved to your account.
+            Sign in with your email code first. Once you are signed in, the form will adapt based on your answers and save the relevant profile details to your account.
           </div>
         )}
       </div>

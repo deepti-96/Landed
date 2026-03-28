@@ -4,12 +4,13 @@ import { useRouter } from 'next/navigation'
 import type { Session } from '@supabase/supabase-js'
 import { StepWithStatus, UserProfile } from '@/lib/types'
 import { calculateDeadline } from '@/lib/deadlines'
+import { getTaxGuidance } from '@/lib/tax'
 import { getCurrentSession, getSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase'
 import { loadRoadmapFromLocalStorage, loadRoadmapFromSupabase, saveRoadmapToLocalStorage, saveRoadmapToSupabase } from '@/lib/roadmap-storage'
 import DeadlineCard from '@/components/DeadlineCard'
 import StepCard from '@/components/StepCard'
 import StepDrawer from '@/components/StepDrawer'
-import { LogOut, Plane, RefreshCw } from 'lucide-react'
+import { AlertTriangle, ExternalLink, LogOut, Plane, RefreshCw } from 'lucide-react'
 
 export default function Dashboard() {
   const router = useRouter()
@@ -23,24 +24,29 @@ export default function Dashboard() {
 
   useEffect(() => {
     let isMounted = true
+    const localRoadmap = loadRoadmapFromLocalStorage()
+
+    if (localRoadmap) {
+      setPlan(localRoadmap.plan)
+      setProfile(localRoadmap.profile)
+      setLoading(false)
+    }
 
     const hydrate = async () => {
-      const localRoadmap = loadRoadmapFromLocalStorage()
-      if (localRoadmap && isMounted) {
-        setPlan(localRoadmap.plan)
-        setProfile(localRoadmap.profile)
-      }
-
       if (!isSupabaseConfigured()) {
-        if (!localRoadmap && isMounted) router.push('/')
-        if (isMounted) setLoading(false)
+        if (!localRoadmap && isMounted) {
+          setLoading(false)
+          router.push('/')
+        }
         return
       }
 
       const supabase = getSupabaseBrowserClient()
       if (!supabase) {
-        if (!localRoadmap && isMounted) router.push('/')
-        if (isMounted) setLoading(false)
+        if (!localRoadmap && isMounted) {
+          setLoading(false)
+          router.push('/')
+        }
         return
       }
 
@@ -51,22 +57,31 @@ export default function Dashboard() {
 
       if (currentSession) {
         const savedRoadmap = await loadRoadmapFromSupabase(supabase, currentSession).catch(() => null)
+        if (!isMounted) return
+
         if (savedRoadmap) {
           setPlan(savedRoadmap.plan)
           setProfile(savedRoadmap.profile)
           saveRoadmapToLocalStorage(savedRoadmap.profile, savedRoadmap.plan)
         } else if (localRoadmap) {
-          await saveRoadmapToSupabase(supabase, currentSession, localRoadmap.profile, localRoadmap.plan).catch(() => null)
-          setSaveMessage('Signed in. Your current roadmap has been saved.')
+          void saveRoadmapToSupabase(supabase, currentSession, localRoadmap.profile, localRoadmap.plan).then(() => {
+            if (isMounted) {
+              setSaveMessage('Signed in. Your current roadmap has been saved.')
+            }
+          }).catch(() => null)
         }
       } else if (!localRoadmap) {
+        setLoading(false)
         router.push('/')
+        return
       }
 
-      setLoading(false)
+      if (!localRoadmap) {
+        setLoading(false)
+      }
     }
 
-    hydrate()
+    void hydrate()
 
     const supabase = getSupabaseBrowserClient()
     if (!supabase) return () => {
@@ -86,13 +101,11 @@ export default function Dashboard() {
     }
   }, [router])
 
-  const deadlineSteps = plan.filter(s =>
-    s.deadline_days && s.deadline_trigger && profile
-  )
-
+  const deadlineSteps = plan.filter(s => s.deadline_days && s.deadline_trigger && profile)
   const doneSteps = plan.filter(s => s.status === 'done')
   const availableSteps = plan.filter(s => s.status === 'available')
   const blockedSteps = plan.filter(s => s.status === 'blocked')
+  const taxGuidance = profile ? getTaxGuidance(profile) : null
 
   const handleStepClick = (step: StepWithStatus) => {
     setSelectedStep(step)
@@ -159,6 +172,54 @@ export default function Dashboard() {
           <div className="mb-6 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
             {saveMessage}
           </div>
+        )}
+
+        {taxGuidance && (
+          <section className="mb-8">
+            <div className={`rounded-2xl border p-5 ${taxGuidance.status === 'overdue' ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'}`}>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2">
+                    <AlertTriangle className={`w-4 h-4 ${taxGuidance.status === 'overdue' ? 'text-red-600' : 'text-amber-600'}`} />
+                    Tax filing for {taxGuidance.taxYear}
+                  </div>
+                  <p className="text-sm text-gray-700 leading-relaxed mb-3">{taxGuidance.summary}</p>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {taxGuidance.forms.map(form => (
+                      <span key={form} className="text-xs font-medium rounded-full bg-white border border-gray-200 px-3 py-1 text-gray-700">
+                        {form}
+                      </span>
+                    ))}
+                  </div>
+                  <ul className="space-y-1 text-sm text-gray-600">
+                    {taxGuidance.details.map(detail => (
+                      <li key={detail}>{detail}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className={`text-sm font-semibold ${taxGuidance.status === 'overdue' ? 'text-red-700' : 'text-amber-700'}`}>
+                    {taxGuidance.status === 'overdue' ? 'Overdue' : 'Action needed'}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Deadline: {taxGuidance.deadline}</p>
+                </div>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-3">
+                {taxGuidance.officialLinks.map(link => (
+                  <a
+                    key={link.url}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-sm text-blue-700 hover:text-blue-900 transition-colors"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    {link.label}
+                  </a>
+                ))}
+              </div>
+            </div>
+          </section>
         )}
 
         {deadlineSteps.length > 0 && (
