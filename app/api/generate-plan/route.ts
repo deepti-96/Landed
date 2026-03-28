@@ -2,6 +2,21 @@ import { NextRequest, NextResponse } from 'next/server'
 import f1Steps from '@/data/f1-steps.json'
 import { StepWithStatus, UserProfile, VisaStep } from '@/lib/types'
 
+function getDaysUntil(dateString?: string) {
+  if (!dateString) return null
+
+  const date = new Date(dateString)
+  if (Number.isNaN(date.getTime())) return null
+
+  const today = new Date()
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  const startOfTarget = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+
+  return Math.ceil(
+    (startOfTarget.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24)
+  )
+}
+
 function getCompletedSteps(profile: UserProfile) {
   const completed = new Set<string>()
 
@@ -14,7 +29,7 @@ function getCompletedSteps(profile: UserProfile) {
   }
 
   if (profile.has_address) completed.add('local_address')
-  if (profile.has_itin) completed.add('itin')
+  if (profile.has_itin || profile.has_ssn) completed.add('itin')
   if (profile.has_ssn) completed.add('ssn_on_campus')
   if (profile.has_bank_account) completed.add('bank_account')
 
@@ -44,6 +59,42 @@ function getBlockingReason(step: VisaStep, missingIds: string[], stepMap: Map<st
   return `Complete these first: ${missingTitles.join(', ')}.`
 }
 
+function getStepOverride(step: VisaStep, profile: UserProfile, completed: Set<string>) {
+  if (step.id === 'itin' && profile.has_ssn) {
+    return {
+      status: 'done' as const,
+      blocking_reason: undefined,
+    }
+  }
+
+  if (step.id === 'opt_application') {
+    const daysUntilGraduation = getDaysUntil(profile.graduation_date)
+
+    if (daysUntilGraduation === null) {
+      return {
+        status: 'blocked' as const,
+        blocking_reason: 'Add your expected graduation date first so the OPT filing window can be calculated.',
+      }
+    }
+
+    if (daysUntilGraduation > 90) {
+      return {
+        status: 'blocked' as const,
+        blocking_reason: `You can file for Post-OPT starting 90 days before graduation. Your window opens in ${daysUntilGraduation - 90} days.`,
+      }
+    }
+  }
+
+  if (step.id === 'stem_opt' && !completed.has('opt_application')) {
+    return {
+      status: 'blocked' as const,
+      blocking_reason: 'STEM OPT comes after regular OPT. Finish your Post-OPT process first.',
+    }
+  }
+
+  return null
+}
+
 function buildPlan(profile: UserProfile) {
   const steps = f1Steps as VisaStep[]
   const stepMap = new Map(steps.map(step => [step.id, step]))
@@ -54,6 +105,14 @@ function buildPlan(profile: UserProfile) {
       return {
         ...step,
         status: 'done',
+      }
+    }
+
+    const override = getStepOverride(step, profile, completed)
+    if (override) {
+      return {
+        ...step,
+        ...override,
       }
     }
 

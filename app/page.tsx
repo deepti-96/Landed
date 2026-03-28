@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import type { Session } from '@supabase/supabase-js'
 import { UserProfile } from '@/lib/types'
 import { getCurrentSession, getSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase'
-import { loadRoadmapFromSupabase, saveRoadmapToLocalStorage, saveRoadmapToSupabase } from '@/lib/roadmap-storage'
+import { loadRoadmapFromLocalStorage, loadRoadmapFromSupabase, saveRoadmapToLocalStorage, saveRoadmapToSupabase } from '@/lib/roadmap-storage'
 import { CheckCircle2, KeyRound, Mail, Plane } from 'lucide-react'
 
 const VISA_TYPES = ['F-1', 'J-1', 'H-1B', 'O-1', 'L-1', 'Other']
@@ -27,6 +27,10 @@ export default function IntakePage() {
   const [otpCode, setOtpCode] = useState('')
   const [codeSent, setCodeSent] = useState(false)
   const [session, setSession] = useState<Session | null>(null)
+  const [authChecked, setAuthChecked] = useState(false)
+  const [isReturningToEdit, setIsReturningToEdit] = useState(false)
+  const [hasSavedRoadmap, setHasSavedRoadmap] = useState(false)
+  const [isEditingSavedProfile, setIsEditingSavedProfile] = useState(false)
   const [profile, setProfile] = useState<Partial<UserProfile>>({
     country_of_origin: 'United States',
     has_ssn: false,
@@ -37,7 +41,33 @@ export default function IntakePage() {
   })
 
   useEffect(() => {
-    if (!isSupabaseConfigured()) return
+    if (typeof window === 'undefined') return
+
+    const editMode = sessionStorage.getItem('landed_edit_profile') === 'true'
+    setIsReturningToEdit(editMode)
+
+    if (editMode) {
+      sessionStorage.removeItem('landed_edit_profile')
+    }
+
+    const localRoadmap = loadRoadmapFromLocalStorage()
+    if (localRoadmap) {
+      setHasSavedRoadmap(true)
+      setProfile(localRoadmap.profile)
+
+      if (editMode) {
+        setIsEditingSavedProfile(true)
+      } else {
+        router.replace('/dashboard')
+      }
+    }
+  }, [router])
+
+  useEffect(() => {
+    if (!isSupabaseConfigured()) {
+      setAuthChecked(true)
+      return
+    }
 
     const supabase = getSupabaseBrowserClient()
     if (!supabase) return
@@ -52,30 +82,61 @@ export default function IntakePage() {
         setEmail(currentSession.user.email ?? '')
 
         const savedRoadmap = await loadRoadmapFromSupabase(supabase, currentSession).catch(() => null)
-        if (!isMounted || !savedRoadmap) return
+        if (!isMounted) return
 
+        if (!savedRoadmap) {
+          setHasSavedRoadmap(false)
+          setAuthChecked(true)
+          return
+        }
+
+        setHasSavedRoadmap(true)
         setProfile(savedRoadmap.profile)
-        setAuthMessage('Signed in. Your saved profile is ready to review.')
+        setAuthChecked(true)
+        if (isReturningToEdit) {
+          setIsEditingSavedProfile(true)
+          setAuthMessage('Signed in. Your saved profile is ready to edit.')
+        } else {
+          setAuthMessage('Signed in. You already have a saved roadmap.')
+        }
       })
       .catch(() => {
-        if (isMounted) setAuthMessage('Could not restore your session.')
+        if (isMounted) {
+          setAuthMessage('Could not restore your session.')
+          setAuthChecked(true)
+        }
       })
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
       setSession(nextSession)
-      if (!nextSession) return
+      if (!nextSession) {
+        setAuthChecked(true)
+        return
+      }
 
       setEmail(nextSession.user.email ?? '')
       setCodeSent(false)
       setOtpCode('')
       const savedRoadmap = await loadRoadmapFromSupabase(supabase, nextSession).catch(() => null)
       if (savedRoadmap) {
+        setHasSavedRoadmap(true)
         setProfile(savedRoadmap.profile)
-        setAuthMessage('Signed in. Your saved profile is ready to review.')
+        if (isReturningToEdit) {
+          setIsEditingSavedProfile(true)
+          setAuthMessage('Signed in. Your saved profile is ready to edit.')
+        } else {
+          setIsEditingSavedProfile(false)
+          setAuthMessage('Signed in. Opening your dashboard...')
+          router.replace('/dashboard')
+        }
+        setAuthChecked(true)
       } else {
+        setHasSavedRoadmap(false)
+        setIsEditingSavedProfile(false)
         setAuthMessage('Signed in. Fill out your profile to save your roadmap.')
+        setAuthChecked(true)
       }
     })
 
@@ -83,7 +144,7 @@ export default function IntakePage() {
       isMounted = false
       subscription.unsubscribe()
     }
-  }, [])
+  }, [isReturningToEdit, router])
 
   const update = (key: keyof UserProfile, value: string | boolean) => {
     setProfile(prev => ({ ...prev, [key]: value }))
@@ -176,6 +237,8 @@ export default function IntakePage() {
 
       const { plan } = await res.json()
       saveRoadmapToLocalStorage(profile, plan)
+      sessionStorage.setItem('landed_profile_updated', 'true')
+      sessionStorage.removeItem('landed_edit_profile')
       router.push('/dashboard')
 
       const supabase = getSupabaseBrowserClient()
@@ -235,6 +298,12 @@ export default function IntakePage() {
           Your personal roadmap for getting set up in the United States. Sign in first, then answer only the questions that match your situation.
         </p>
 
+        {isReturningToEdit && !authChecked ? (
+          <div className="mb-6 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-700">
+            Opening your saved profile...
+          </div>
+        ) : null}
+
         <div className="mb-6 rounded-2xl border border-gray-200 bg-gray-50 p-4 space-y-3">
           <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
             <Mail className="h-4 w-4" />
@@ -248,6 +317,10 @@ export default function IntakePage() {
                 Signed in as <span className="font-medium">{session.user.email}</span>. Your profile choices and roadmap can now be saved.
               </div>
             </div>
+          ) : isSupabaseConfigured() && !authChecked ? (
+            <p className="text-sm text-gray-500 leading-relaxed">
+              Restoring your session...
+            </p>
           ) : isSupabaseConfigured() ? (
             <>
               <input
@@ -311,19 +384,38 @@ export default function IntakePage() {
             <p className="text-xs rounded-xl bg-blue-50 text-blue-700 px-3 py-2">{authMessage}</p>
           )}
 
-          {session && (
-            <button
-              type="button"
-              onClick={openSavedRoadmap}
-              className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              Open saved roadmap
-            </button>
+          {session && hasSavedRoadmap && !isEditingSavedProfile && (
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={openSavedRoadmap}
+                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Open saved roadmap
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  sessionStorage.setItem('landed_edit_profile', 'true')
+                  setIsEditingSavedProfile(true)
+                  setAuthMessage('Editing your saved profile now.')
+                }}
+                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Edit saved profile
+              </button>
+            </div>
           )}
         </div>
 
         {session ? (
-          <div className="space-y-5">
+          isEditingSavedProfile || !hasSavedRoadmap ? (
+            <div className="space-y-5">
+              {isEditingSavedProfile && (
+                <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+                  You are editing your saved profile. Update any answers below, then rebuild your roadmap to save the changes.
+                </div>
+              )}
             <div className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Current scope</p>
               <p className="text-sm text-gray-700">Landed is currently configured for people getting set up in the United States.</p>
@@ -434,6 +526,11 @@ export default function IntakePage() {
               )}
             </button>
           </div>
+          ) : (
+            <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 text-sm text-gray-600 leading-relaxed">
+              Redirecting to your dashboard...
+            </div>
+          )
         ) : (
           <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-4 py-5 text-sm text-gray-500 leading-relaxed">
             Sign in with your email code first. Once you are signed in, the form will adapt based on your answers and save the relevant profile details to your account.

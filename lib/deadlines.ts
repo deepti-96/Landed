@@ -7,7 +7,7 @@ export function calculateDeadline(
   if (!step.deadline_days || !step.deadline_trigger) return null
 
   // STEM OPT needs a dedicated extension timeline, not the student's original I-20 date.
-  // Until we collect that later-phase data, only surface the pre-graduation OPT deadline.
+  // Post-OPT should only show once the filing window opens 90 days before graduation.
   if (step.id === 'stem_opt') return null
 
   const triggerValue = profile[step.deadline_trigger as keyof UserProfile]
@@ -20,6 +20,7 @@ export function calculateDeadline(
   deadline.setDate(deadline.getDate() + step.deadline_days)
 
   const today = new Date()
+  if (step.id === 'opt_application' && today < deadline) return null
   const daysRemaining = Math.ceil(
     (deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
   )

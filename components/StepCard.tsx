@@ -1,6 +1,6 @@
 'use client'
 import { StepWithStatus, UserProfile } from '@/lib/types'
-import { calculateDeadline } from '@/lib/deadlines'
+import { calculateDeadline, formatDate } from '@/lib/deadlines'
 import { CheckCircle2, Circle, Lock, ChevronRight, AlertTriangle } from 'lucide-react'
 
 interface Props {
@@ -54,6 +54,11 @@ export default function StepCard({ step, profile, onClick }: Props) {
               ? step.blocking_reason
               : step.description}
           </p>
+          {step.id === 'opt_application' && profile.graduation_date && (
+            <p className="text-[11px] text-gray-400 mt-2">
+              Based on your graduation date of {formatDate(new Date(profile.graduation_date))}.
+            </p>
+          )}
         </div>
         {step.status !== 'done' && (
           <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0 mt-0.5" />

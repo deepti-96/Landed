@@ -24,6 +24,12 @@ export default function Dashboard() {
 
   useEffect(() => {
     let isMounted = true
+    const profileUpdated = typeof window !== 'undefined' ? sessionStorage.getItem('landed_profile_updated') : null
+    if (profileUpdated) {
+      setSaveMessage('Profile updated. Your roadmap has been rebuilt with the latest answers.')
+      sessionStorage.removeItem('landed_profile_updated')
+    }
+
     const localRoadmap = loadRoadmapFromLocalStorage()
 
     if (localRoadmap) {
@@ -157,7 +163,10 @@ export default function Dashboard() {
               </span>
             )}
             <button
-              onClick={() => router.push('/')}
+              onClick={() => {
+                sessionStorage.setItem('landed_edit_profile', 'true')
+                router.push('/')
+              }}
               className="text-sm text-gray-500 hover:text-gray-900 flex items-center gap-1 transition-colors"
             >
               <RefreshCw className="w-3.5 h-3.5" />
