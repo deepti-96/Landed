@@ -30,6 +30,8 @@ export interface UserProfile {
   employment_status: 'unemployed' | 'on_campus' | 'cpt' | 'opt' | 'stem_opt' | 'none'
 }
 
+export type DraftMessageType = 'dso_email' | 'landlord_email' | 'bank_inquiry'
+
 export interface StepWithStatus extends VisaStep {
   status: StepStatus
   deadline_date?: string

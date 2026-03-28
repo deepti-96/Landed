@@ -175,3 +175,14 @@ Your app will be live at a `vercel.app` URL in under 2 minutes.
 - **TypeScript** — type safety
 - **Lucide React** — icons
 - **Vercel** — deployment (optional)
+
+
+## Supabase Setup
+
+1. Create a Supabase project.
+2. In Supabase Auth, enable Email and Google providers.
+3. Add your local site URL (`http://localhost:3000`) to the allowed redirect URLs.
+4. Copy `.env.example` values into `.env.local` and fill in your Supabase keys.
+5. Run the SQL in `supabase-schema.sql` inside the Supabase SQL editor.
+
+Once configured, users can sign in with a magic link or Google and save their roadmap across devices.

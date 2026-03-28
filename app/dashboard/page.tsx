@@ -1,12 +1,15 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import type { Session } from '@supabase/supabase-js'
 import { StepWithStatus, UserProfile } from '@/lib/types'
-import { calculateDeadline, formatDate } from '@/lib/deadlines'
+import { calculateDeadline } from '@/lib/deadlines'
+import { getCurrentSession, getSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase'
+import { loadRoadmapFromLocalStorage, loadRoadmapFromSupabase, saveRoadmapToLocalStorage, saveRoadmapToSupabase } from '@/lib/roadmap-storage'
 import DeadlineCard from '@/components/DeadlineCard'
 import StepCard from '@/components/StepCard'
 import StepDrawer from '@/components/StepDrawer'
-import { Plane, RefreshCw } from 'lucide-react'
+import { LogOut, Plane, RefreshCw } from 'lucide-react'
 
 export default function Dashboard() {
   const router = useRouter()
@@ -14,16 +17,73 @@ export default function Dashboard() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [selectedStep, setSelectedStep] = useState<StepWithStatus | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [session, setSession] = useState<Session | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [saveMessage, setSaveMessage] = useState('')
 
   useEffect(() => {
-    const storedPlan = localStorage.getItem('landed_plan')
-    const storedProfile = localStorage.getItem('landed_profile')
-    if (!storedPlan || !storedProfile) {
-      router.push('/')
-      return
+    let isMounted = true
+
+    const hydrate = async () => {
+      const localRoadmap = loadRoadmapFromLocalStorage()
+      if (localRoadmap && isMounted) {
+        setPlan(localRoadmap.plan)
+        setProfile(localRoadmap.profile)
+      }
+
+      if (!isSupabaseConfigured()) {
+        if (!localRoadmap && isMounted) router.push('/')
+        if (isMounted) setLoading(false)
+        return
+      }
+
+      const supabase = getSupabaseBrowserClient()
+      if (!supabase) {
+        if (!localRoadmap && isMounted) router.push('/')
+        if (isMounted) setLoading(false)
+        return
+      }
+
+      const currentSession = await getCurrentSession().catch(() => null)
+      if (!isMounted) return
+
+      setSession(currentSession)
+
+      if (currentSession) {
+        const savedRoadmap = await loadRoadmapFromSupabase(supabase, currentSession).catch(() => null)
+        if (savedRoadmap) {
+          setPlan(savedRoadmap.plan)
+          setProfile(savedRoadmap.profile)
+          saveRoadmapToLocalStorage(savedRoadmap.profile, savedRoadmap.plan)
+        } else if (localRoadmap) {
+          await saveRoadmapToSupabase(supabase, currentSession, localRoadmap.profile, localRoadmap.plan).catch(() => null)
+          setSaveMessage('Signed in. Your current roadmap has been saved.')
+        }
+      } else if (!localRoadmap) {
+        router.push('/')
+      }
+
+      setLoading(false)
     }
-    setPlan(JSON.parse(storedPlan))
-    setProfile(JSON.parse(storedProfile))
+
+    hydrate()
+
+    const supabase = getSupabaseBrowserClient()
+    if (!supabase) return () => {
+      isMounted = false
+    }
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (!isMounted) return
+      setSession(nextSession)
+    })
+
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
   }, [router])
 
   const deadlineSteps = plan.filter(s =>
@@ -39,7 +99,16 @@ export default function Dashboard() {
     setDrawerOpen(true)
   }
 
-  if (!plan.length || !profile) {
+  const handleSignOut = async () => {
+    const supabase = getSupabaseBrowserClient()
+    if (!supabase) return
+
+    await supabase.auth.signOut()
+    setSession(null)
+    setSaveMessage('Signed out. Your latest local roadmap remains on this device.')
+  }
+
+  if (loading || !plan.length || !profile) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin" />
@@ -49,19 +118,31 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white border-b border-gray-100 px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
               <Plane className="w-4 h-4 text-white" />
             </div>
             <span className="font-semibold text-gray-900">Landed</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap justify-end">
             <span className="text-sm text-gray-500">
               {profile.visa_type} · {profile.country_of_origin}
             </span>
+            {session ? (
+              <button
+                onClick={handleSignOut}
+                className="text-sm text-gray-500 hover:text-gray-900 flex items-center gap-1 transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                Sign out
+              </button>
+            ) : (
+              <span className="text-xs text-gray-400">
+                {isSupabaseConfigured() ? 'Not signed in' : 'Supabase not configured'}
+              </span>
+            )}
             <button
               onClick={() => router.push('/')}
               className="text-sm text-gray-500 hover:text-gray-900 flex items-center gap-1 transition-colors"
@@ -74,7 +155,12 @@ export default function Dashboard() {
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-8">
-        {/* Deadline section */}
+        {saveMessage && (
+          <div className="mb-6 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+            {saveMessage}
+          </div>
+        )}
+
         {deadlineSteps.length > 0 && (
           <section className="mb-8">
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
@@ -99,7 +185,6 @@ export default function Dashboard() {
           </section>
         )}
 
-        {/* Progress summary */}
         <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-8 flex items-center gap-6">
           <div className="text-center">
             <p className="text-2xl font-semibold text-gray-900">{doneSteps.length}</p>
@@ -128,7 +213,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Do now */}
         {availableSteps.length > 0 && (
           <section className="mb-8">
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
@@ -147,7 +231,6 @@ export default function Dashboard() {
           </section>
         )}
 
-        {/* Blocked */}
         {blockedSteps.length > 0 && (
           <section className="mb-8">
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
@@ -166,7 +249,6 @@ export default function Dashboard() {
           </section>
         )}
 
-        {/* Done */}
         {doneSteps.length > 0 && (
           <section className="mb-8">
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
@@ -186,7 +268,6 @@ export default function Dashboard() {
         )}
       </main>
 
-      {/* Step drawer */}
       {selectedStep && (
         <StepDrawer
           step={selectedStep}
