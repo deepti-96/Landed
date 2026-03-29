@@ -1,4 +1,4 @@
-# Landed 🛬
+# Landed
 
 Your personal roadmap through US immigration bureaucracy. Built for international students.
 
