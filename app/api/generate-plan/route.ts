@@ -96,7 +96,7 @@ function getStepOverride(step: VisaStep, profile: UserProfile, completed: Set<st
 }
 
 function buildPlan(profile: UserProfile) {
-  const steps = f1Steps as VisaStep[]
+  const steps = (f1Steps as VisaStep[]).filter(step => !(profile.has_ssn && step.id === 'itin'))
   const stepMap = new Map(steps.map(step => [step.id, step]))
   const completed = getCompletedSteps(profile)
 
