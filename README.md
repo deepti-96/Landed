@@ -1,188 +1,167 @@
-# Landed - Your Immigration Roadmap
+# Landed
 
-Your personal roadmap through US immigration bureaucracy. Built for international students.
+Landed is a Next.js app that helps students in the United States track immigration, setup, and compliance tasks through a personalized roadmap.
 
----
+## What the app does
 
-## Step-by-Step Setup in VS Code
+- Signs users in with Supabase email OTP
+- Saves profile answers and roadmap data to Supabase and local storage
+- Builds a personalized roadmap for U.S. setup and F-1 style milestones
+- Shows a scrollable milestone roadmap with completed, open, and locked steps
+- Surfaces deadline cards and tax guidance when relevant
+- Lets users open a step drawer for explanations and draft emails
+- Supports light mode and dark mode
 
-### Step 1 — Prerequisites
+## Current scope
 
-Make sure you have these installed:
-- **Node.js** (v18 or higher) — check with `node --version`
-- **npm** — check with `npm --version`
-- **VS Code** — download at code.visualstudio.com
+The current product flow is focused on users getting set up in the United States.
 
-If you don't have Node.js, download it from nodejs.org (LTS version).
+## Tech stack
 
----
+- Next.js 14
+- TypeScript
+- Tailwind CSS
+- Supabase Auth and storage
+- Groq SDK for explanation and draft-generation APIs
+- Lucide React icons
 
-### Step 2 — Get your free Groq API key
+## Local setup
 
-1. Go to **https://console.groq.com**
-2. Sign up with your Google or GitHub account (free)
-3. Click **"API Keys"** in the left sidebar
-4. Click **"Create API Key"**
-5. Copy the key — you'll need it in Step 4
-
----
-
-### Step 3 — Open the project in VS Code
-
-1. Unzip the `landed.zip` file you downloaded
-2. Open VS Code
-3. Go to **File → Open Folder**
-4. Select the `landed` folder
-5. Open the integrated terminal: **Terminal → New Terminal**
-
----
-
-### Step 4 — Create your environment file
-
-In the VS Code terminal, run:
-
-```bash
-cp .env.example .env.local
-```
-
-Then open `.env.local` and replace `your_groq_api_key_here` with your actual Groq API key:
-
-```
-GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxxxxx
-```
-
-Save the file. **Never share this file or commit it to GitHub.**
-
----
-
-### Step 5 — Install dependencies
-
-In the terminal, run:
+### 1. Install dependencies
 
 ```bash
 npm install
 ```
 
-This installs all required packages. Takes about 1-2 minutes.
+### 2. Create your environment file
 
----
+```bash
+cp .env.example .env.local
+```
 
-### Step 6 — Start the development server
+Fill in `.env.local` with your real values:
+
+```env
+GROQ_API_KEY=your_groq_api_key_here
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_publishable_key_here
+```
+
+Notes:
+- Use your Supabase project URL
+- Use the client-safe Supabase publishable key
+- Do not put a Supabase secret key in `.env.local`
+
+### 3. Set up Supabase
+
+In Supabase:
+
+1. Create a project
+2. Enable email sign-in / OTP
+3. Set `Site URL` to `http://localhost:3000`
+4. Add `http://localhost:3000` to redirect URLs
+5. Run the SQL in [supabase-schema.sql](/Users/deepti.r.kumar/Desktop/Documents/Projects/landed/supabase-schema.sql) in the SQL Editor
+
+### 4. Start the app
 
 ```bash
 npm run dev
 ```
 
-You should see:
-```
-▲ Next.js 14.2.5
-- Local: http://localhost:3000
-```
+Open [http://localhost:3000](http://localhost:3000).
 
----
-
-### Step 7 — Open the app
-
-Go to **http://localhost:3000** in your browser.
-
-You should see the Landed intake form. Fill in your details and click "Build my roadmap."
-
----
-
-## How it works
-
-1. **Intake form** — you answer 6 questions about your visa situation
-2. **Groq AI** — reasons over your answers and maps your dependency graph
-3. **Dashboard** — shows your personalized action plan with:
-   - Deadline countdown timers (turns red when urgent)
-   - Steps you can do right now (blue)
-   - Steps that are blocked (gray, with reason)
-4. **Step drawer** — click any step to get a plain-English explanation
-5. **Draft helper** — generates ready-to-send emails for DSOs, landlords, banks
-
----
-
-## Project structure
-
-```
-landed/
-├── app/
-│   ├── page.tsx              # intake form
-│   ├── dashboard/page.tsx    # main dashboard
-│   └── api/
-│       ├── generate-plan/    # Claude call: intake → plan
-│       ├── explain-step/     # Claude call: step explanation (streaming)
-│       └── draft-message/    # Claude call: email drafts (streaming)
-├── components/
-│   ├── DeadlineCard.tsx      # countdown timer cards
-│   ├── StepCard.tsx          # individual step cards
-│   └── StepDrawer.tsx        # side drawer with explanation + drafts
-├── lib/
-│   ├── types.ts              # TypeScript interfaces
-│   └── deadlines.ts          # deadline calculator (pure JS)
-└── data/
-    └── f1-steps.json         # F-1 visa knowledge base
-```
-
----
-
-## Adding more visa types
-
-1. Create a new file: `data/h1b-steps.json` (same structure as f1-steps.json)
-2. In `app/api/generate-plan/route.ts`, import it and add logic:
-
-```typescript
-import h1bSteps from '@/data/h1b-steps.json'
-const steps = profile.visa_type === 'H-1B' ? h1bSteps : f1Steps
-```
-
----
-
-## Deploying to Vercel (free)
+For a cleaner production-like local test:
 
 ```bash
-npm install -g vercel
-vercel
+npm run build
+npm run start
 ```
 
-Follow the prompts. When asked about environment variables, add your `GROQ_API_KEY`.
+## Scripts
 
-Your app will be live at a `vercel.app` URL in under 2 minutes.
+```bash
+npm run dev
+npm run build
+npm run start
+npm run lint
+```
 
----
+## User flow
+
+1. Sign in with an emailed 6-digit code
+2. Fill in or edit your saved profile
+3. Build your roadmap
+4. Review milestone sections on the dashboard
+5. Open any step for details, official links, and draft help
+
+## Main app structure
+
+```text
+landed/
+├── app/
+│   ├── page.tsx
+│   ├── dashboard/page.tsx
+│   └── api/
+│       ├── generate-plan/
+│       ├── explain-step/
+│       └── draft-message/
+├── components/
+│   ├── DeadlineCard.tsx
+│   ├── RoadmapNode.tsx
+│   ├── RoadmapSection.tsx
+│   ├── StepDrawer.tsx
+│   ├── ThemeScript.tsx
+│   └── ThemeToggle.tsx
+├── data/
+│   └── f1-steps.json
+├── lib/
+│   ├── deadlines.ts
+│   ├── roadmap-storage.ts
+│   ├── supabase.ts
+│   ├── tax.ts
+│   └── types.ts
+└── supabase-schema.sql
+```
+
+## Notes about roadmap logic
+
+- Roadmap generation is currently deterministic in the API route
+- Saved profile answers affect which steps are done, open now, or blocked
+- OPT timing uses graduation date
+- ITIN should not appear when the user already has an SSN
+- Tax suggestions depend on whether the user was in the U.S. during the last tax year and whether they had U.S. income
+
+## Deployment
+
+This app deploys well on Vercel.
+
+Typical deployment flow:
+
+1. Push to GitHub
+2. Import the repo into Vercel
+3. Add the same environment variables in Vercel project settings
+4. Add your Vercel URL to Supabase Auth redirect URLs
+5. Push to `main` for automatic production redeploys
 
 ## Common issues
 
-**"Module not found" error**
-→ Run `npm install` again
+### Supabase email rate limit exceeded
 
-**"Invalid API key" error**
-→ Check your `.env.local` file — make sure there are no spaces around the `=`
+Wait before requesting another OTP code. Repeated local testing can hit Supabase auth email rate limits quickly.
 
-**Blank dashboard / no steps**
-→ Open browser DevTools → Console and check for errors. Usually a JSON parse issue.
+### Next.js missing chunk or CSS 404 errors in local dev
 
-**Groq rate limit**
-→ Free tier allows 30 requests/minute. More than enough for development.
+Clear the local Next build cache and restart:
 
----
+```bash
+rm -rf .next
+npm run dev
+```
 
-## Tech stack
+### App works in build mode but feels slow in dev
 
-- **Next.js 14** — React framework with App Router
-- **Tailwind CSS** — styling
-- **Groq SDK** — AI API (llama-3.3-70b-versatile model, free tier)
-- **TypeScript** — type safety
-- **Lucide React** — icons
-- **Vercel** — deployment (optional)
+`next dev` is slower because it recompiles and does extra development checks. Use `npm run build && npm run start` to test production-like performance.
 
+## Environment example
 
-## Supabase Setup
-
-1. Create a Supabase project.
-2. In Supabase Auth, enable Email and Google providers.
-3. Add your local site URL (`http://localhost:3000`) to the allowed redirect URLs.
-4. Copy `.env.example` values into `.env.local` and fill in your Supabase keys.
-5. Run the SQL in `supabase-schema.sql` inside the Supabase SQL editor.
-
-Once configured, users can sign in with a magic link or Google and save their roadmap across devices.
+See [.env.example](/Users/deepti.r.kumar/Desktop/Documents/Projects/landed/.env.example).
