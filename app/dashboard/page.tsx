@@ -8,6 +8,7 @@ import { getTaxGuidance } from '@/lib/tax'
 import { getCurrentSession, getSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase'
 import { loadRoadmapFromLocalStorage, loadRoadmapFromSupabase, saveRoadmapToLocalStorage, saveRoadmapToSupabase } from '@/lib/roadmap-storage'
 import DeadlineCard from '@/components/DeadlineCard'
+import ProfileEditorDialog from '@/components/ProfileEditorDialog'
 import RoadmapSection from '@/components/RoadmapSection'
 import StepDrawer from '@/components/StepDrawer'
 import { AlertTriangle, Compass, ExternalLink, LogOut, Plane, RefreshCw, Sparkles, Target } from 'lucide-react'
@@ -54,6 +55,10 @@ export default function Dashboard() {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [saveMessage, setSaveMessage] = useState('')
+  const [editorOpen, setEditorOpen] = useState(false)
+  const [editorProfile, setEditorProfile] = useState<UserProfile | null>(null)
+  const [editorSaving, setEditorSaving] = useState(false)
+  const [editorError, setEditorError] = useState('')
 
   useEffect(() => {
     let isMounted = true
@@ -162,6 +167,52 @@ export default function Dashboard() {
     setDrawerOpen(true)
   }
 
+
+  const openProfileEditor = () => {
+    setEditorProfile(profile)
+    setEditorError('')
+    setEditorOpen(true)
+  }
+
+  const handleSaveProfile = async (nextProfile: UserProfile) => {
+    if (!nextProfile.visa_type || nextProfile.currently_in_us === undefined) {
+      setEditorError('Please answer the required profile questions first.')
+      return
+    }
+
+    setEditorSaving(true)
+    setEditorError('')
+
+    try {
+      const res = await fetch('/api/generate-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nextProfile),
+      })
+
+      if (!res.ok) throw new Error('API error')
+
+      const { plan: nextPlan } = await res.json()
+      setProfile(nextProfile)
+      setPlan(nextPlan)
+      setSelectedStep(null)
+      setDrawerOpen(false)
+      saveRoadmapToLocalStorage(nextProfile, nextPlan)
+
+      const supabase = getSupabaseBrowserClient()
+      if (supabase && session) {
+        await saveRoadmapToSupabase(supabase, session, nextProfile, nextPlan)
+      }
+
+      setEditorOpen(false)
+      setSaveMessage('Profile updated. Your roadmap has been rebuilt with the latest answers.')
+    } catch (_error) {
+      setEditorError('Could not save your profile changes. Please try again.')
+    } finally {
+      setEditorSaving(false)
+    }
+  }
+
   const handleSignOut = async () => {
     const supabase = getSupabaseBrowserClient()
     if (!supabase) return
@@ -180,39 +231,36 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#eef6ff,_#f8fafc_45%,_#f8fafc)]">
-      <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/85 px-6 py-4 backdrop-blur-xl">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#eef6ff,_#f8fafc_45%,_#f8fafc)] dark:bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.12),_#020617_38%,_#020617)]">
+      <header className="sticky top-0 z-20 border-b border-slate-200 dark:border-slate-800/80 bg-white/85 dark:bg-slate-950/85 px-6 py-4 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-slate-900 shadow-sm shadow-slate-300/40">
               <Plane className="h-4 w-4 text-white" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-900">Landed</p>
-              <p className="text-xs text-slate-500">{profile.visa_type} roadmap</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Landed</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{profile.visa_type} roadmap</p>
             </div>
           </div>
           <div className="flex items-center gap-4 flex-wrap justify-end">
-            <span className="text-sm text-slate-500">{profile.country_of_origin}</span>
+            <span className="text-sm text-slate-500 dark:text-slate-400">{profile.country_of_origin}</span>
             {session ? (
               <button
                 onClick={handleSignOut}
-                className="text-sm text-slate-500 hover:text-slate-900 flex items-center gap-1 transition-colors"
+                className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-slate-100 flex items-center gap-1 transition-colors"
               >
                 <LogOut className="h-3.5 w-3.5" />
                 Sign out
               </button>
             ) : (
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-slate-400 dark:text-slate-500">
                 {isSupabaseConfigured() ? 'Not signed in' : 'Supabase not configured'}
               </span>
             )}
             <button
-              onClick={() => {
-                sessionStorage.setItem('landed_edit_profile', 'true')
-                router.push('/')
-              }}
-              className="text-sm text-slate-500 hover:text-slate-900 flex items-center gap-1 transition-colors"
+              onClick={openProfileEditor}
+              className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-slate-100 flex items-center gap-1 transition-colors"
             >
               <RefreshCw className="h-3.5 w-3.5" />
               Update profile
@@ -223,70 +271,70 @@ export default function Dashboard() {
 
       <main className="mx-auto max-w-6xl px-6 py-8">
         {saveMessage && (
-          <div className="mb-6 rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm text-sky-700">
+          <div className="mb-6 rounded-2xl border border-sky-100 dark:border-sky-900/60 bg-sky-50 dark:bg-sky-950/40 px-4 py-3 text-sm text-sky-700 dark:text-sky-300">
             {saveMessage}
           </div>
         )}
 
         <section className="mb-8 grid gap-5 lg:grid-cols-[1.4fr_0.9fr]">
-          <div className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-sm shadow-slate-200/50 backdrop-blur">
+          <div className="rounded-[32px] border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-6 shadow-sm shadow-slate-200/50 backdrop-blur">
             <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Your journey</p>
-                <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900">A roadmap you can actually follow</h1>
-                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-500">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">Your journey</p>
+                <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">A roadmap you can actually follow</h1>
+                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-500 dark:text-slate-400">
                   Work through the brightest cards first. Completed milestones recede into the background, and future milestones stay visible so you always know what unlocks next.
                 </p>
               </div>
-              <div className="rounded-2xl bg-slate-50 px-4 py-3 text-right">
-                <p className="text-xs uppercase tracking-wide text-slate-400">Progress</p>
-                <p className="mt-1 text-3xl font-semibold text-slate-900">{completionPercent}%</p>
+              <div className="rounded-2xl bg-slate-50 dark:bg-slate-800 px-4 py-3 text-right">
+                <p className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Progress</p>
+                <p className="mt-1 text-3xl font-semibold text-slate-900 dark:text-slate-100">{completionPercent}%</p>
               </div>
             </div>
             <div className="mb-3 flex items-center gap-3">
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                 <div className="h-full rounded-full bg-gradient-to-r from-sky-500 via-emerald-500 to-emerald-600 transition-all" style={{ width: `${completionPercent}%` }} />
               </div>
-              <span className="text-sm text-slate-500">{doneSteps.length} / {plan.length} done</span>
+              <span className="text-sm text-slate-500 dark:text-slate-400">{doneSteps.length} / {plan.length} done</span>
             </div>
             <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3">
-                <p className="text-xs uppercase tracking-wide text-emerald-600">Completed</p>
-                <p className="mt-1 text-2xl font-semibold text-emerald-900">{doneSteps.length}</p>
+              <div className="rounded-2xl border border-emerald-100 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-950/40 px-4 py-3">
+                <p className="text-xs uppercase tracking-wide text-emerald-600 dark:text-emerald-300">Completed</p>
+                <p className="mt-1 text-2xl font-semibold text-emerald-900 dark:text-emerald-200">{doneSteps.length}</p>
               </div>
-              <div className="rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3">
+              <div className="rounded-2xl border border-sky-100 dark:border-sky-900/60 bg-sky-50 dark:bg-sky-950/40 px-4 py-3">
                 <p className="text-xs uppercase tracking-wide text-sky-600">Open now</p>
                 <p className="mt-1 text-2xl font-semibold text-sky-900">{availableSteps.length}</p>
               </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <p className="text-xs uppercase tracking-wide text-slate-500">Locked</p>
-                <p className="mt-1 text-2xl font-semibold text-slate-900">{blockedSteps.length}</p>
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-3">
+                <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Locked</p>
+                <p className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">{blockedSteps.length}</p>
               </div>
             </div>
           </div>
 
           <div className="space-y-5">
-            <div className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-sm shadow-slate-200/50">
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+            <div className="rounded-[32px] border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-6 shadow-sm shadow-slate-200/50">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
                 <Target className="h-4 w-4 text-sky-600" />
                 Next best move
               </div>
               {nextAction ? (
-                <button onClick={() => handleStepClick(nextAction)} className="mt-4 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 text-left transition hover:border-slate-300 hover:bg-white">
-                  <p className="text-sm font-semibold text-slate-900">{nextAction.title}</p>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-500">{nextAction.status === 'blocked' && nextAction.blocking_reason ? nextAction.blocking_reason : nextAction.description}</p>
+                <button onClick={() => handleStepClick(nextAction)} className="mt-4 w-full rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-4 text-left transition hover:border-slate-300 hover:bg-white dark:hover:border-slate-700 dark:hover:bg-slate-700/80">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{nextAction.title}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">{nextAction.status === 'blocked' && nextAction.blocking_reason ? nextAction.blocking_reason : nextAction.description}</p>
                 </button>
               ) : (
-                <p className="mt-4 text-sm text-slate-500">You have cleared every visible milestone for now.</p>
+                <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">You have cleared every visible milestone for now.</p>
               )}
             </div>
 
-            <div className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-sm shadow-slate-200/50">
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+            <div className="rounded-[32px] border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-6 shadow-sm shadow-slate-200/50">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
                 <Sparkles className="h-4 w-4 text-amber-500" />
                 Momentum
               </div>
-              <p className="mt-3 text-sm leading-relaxed text-slate-500">
+              <p className="mt-3 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
                 {doneSteps.length > 0
                   ? `You have already completed ${doneSteps.length} milestone${doneSteps.length === 1 ? '' : 's'}. Keep moving and the locked parts of the path will start opening up.`
                   : 'Start with your first bright milestone and this roadmap will unlock itself step by step.'}
@@ -297,35 +345,35 @@ export default function Dashboard() {
 
         {taxGuidance && (
           <section className="mb-8">
-            <div className={`rounded-[32px] border p-5 ${taxGuidance.status === 'overdue' ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50'}`}>
+            <div className={`rounded-[32px] border p-5 ${taxGuidance.status === 'overdue' ? 'border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/40' : 'border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/40'}`}>
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-900">
+                  <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
                     <AlertTriangle className={`h-4 w-4 ${taxGuidance.status === 'overdue' ? 'text-red-600' : 'text-amber-600'}`} />
                     Tax filing for {taxGuidance.taxYear}
                   </div>
-                  <p className="mb-3 text-sm leading-relaxed text-slate-700">{taxGuidance.summary}</p>
+                  <p className="mb-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">{taxGuidance.summary}</p>
                   <div className="mb-3 flex flex-wrap gap-2">
                     {taxGuidance.forms.map(form => (
-                      <span key={form} className="rounded-full border border-white/80 bg-white px-3 py-1 text-xs font-medium text-slate-700">
+                      <span key={form} className="rounded-full border border-white/80 bg-white px-3 py-1 text-xs font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
                         {form}
                       </span>
                     ))}
                   </div>
-                  <ul className="space-y-1 text-sm text-slate-600">
+                  <ul className="space-y-1 text-sm text-slate-600 dark:text-slate-300">
                     {taxGuidance.details.map(detail => <li key={detail}>{detail}</li>)}
                   </ul>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className={`text-sm font-semibold ${taxGuidance.status === 'overdue' ? 'text-red-700' : 'text-amber-700'}`}>
+                  <p className={`text-sm font-semibold ${taxGuidance.status === 'overdue' ? 'text-red-700 dark:text-red-300' : 'text-amber-700 dark:text-amber-300'}`}>
                     {taxGuidance.status === 'overdue' ? 'Overdue' : 'Action needed'}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">Deadline: {taxGuidance.deadline}</p>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Deadline: {taxGuidance.deadline}</p>
                 </div>
               </div>
               <div className="mt-4 flex flex-wrap gap-3">
                 {taxGuidance.officialLinks.map(link => (
-                  <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-blue-700 hover:text-blue-900 transition-colors">
+                  <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-blue-700 transition-colors hover:text-blue-900 dark:text-sky-300 dark:hover:text-sky-200">
                     <ExternalLink className="h-3.5 w-3.5" />
                     {link.label}
                   </a>
@@ -337,7 +385,7 @@ export default function Dashboard() {
 
         {deadlineSteps.length > 0 && (
           <section className="mb-8">
-            <div className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
+            <div className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
               <Compass className="h-4 w-4" />
               Deadlines on your path
             </div>
@@ -373,6 +421,19 @@ export default function Dashboard() {
           ))}
         </section>
       </main>
+
+      <ProfileEditorDialog
+        open={editorOpen}
+        profile={editorProfile}
+        loading={editorSaving}
+        error={editorError}
+        onClose={() => {
+          if (editorSaving) return
+          setEditorOpen(false)
+          setEditorError('')
+        }}
+        onSave={handleSaveProfile}
+      />
 
       {selectedStep && (
         <StepDrawer

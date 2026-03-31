@@ -6,6 +6,21 @@
   box-sizing: border-box;
 }
 
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
 body {
-  background-color: #f9fafb;
+  background-color: #f8fafc;
+  color: #0f172a;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+html.dark body {
+  background-color: #020617;
+  color: #e2e8f0;
 }

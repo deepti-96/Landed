@@ -13,24 +13,24 @@ interface Props {
 
 const styles = {
   red: {
-    card: 'bg-red-50 border-red-200 hover:border-red-300',
-    days: 'text-red-600',
-    text: 'text-red-700',
-    muted: 'text-red-400',
+    card: 'bg-red-50 border-red-200 hover:border-red-300 dark:bg-red-950/40 dark:border-red-900/50 dark:hover:border-red-800',
+    days: 'text-red-600 dark:text-red-300',
+    text: 'text-red-700 dark:text-red-200',
+    muted: 'text-red-400 dark:text-red-300/80',
     icon: <AlertTriangle className="w-4 h-4 text-red-500" />,
   },
   amber: {
-    card: 'bg-amber-50 border-amber-200 hover:border-amber-300',
-    days: 'text-amber-600',
-    text: 'text-amber-700',
-    muted: 'text-amber-400',
+    card: 'bg-amber-50 border-amber-200 hover:border-amber-300 dark:bg-amber-950/40 dark:border-amber-900/50 dark:hover:border-amber-800',
+    days: 'text-amber-600 dark:text-amber-300',
+    text: 'text-amber-700 dark:text-amber-200',
+    muted: 'text-amber-400 dark:text-amber-300/80',
     icon: <Clock className="w-4 h-4 text-amber-500" />,
   },
   green: {
-    card: 'bg-green-50 border-green-200 hover:border-green-300',
-    days: 'text-green-600',
-    text: 'text-green-700',
-    muted: 'text-green-400',
+    card: 'bg-green-50 border-green-200 hover:border-green-300 dark:bg-green-950/40 dark:border-green-900/50 dark:hover:border-green-800',
+    days: 'text-green-600 dark:text-green-300',
+    text: 'text-green-700 dark:text-green-200',
+    muted: 'text-green-400 dark:text-green-300/80',
     icon: <CheckCircle className="w-4 h-4 text-green-500" />,
   },
 }

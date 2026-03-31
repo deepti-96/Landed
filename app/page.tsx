@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Session } from '@supabase/supabase-js'
 import { UserProfile } from '@/lib/types'
@@ -29,6 +29,7 @@ export default function IntakePage() {
   const [session, setSession] = useState<Session | null>(null)
   const [authChecked, setAuthChecked] = useState(false)
   const [isReturningToEdit, setIsReturningToEdit] = useState(false)
+  const editIntentRef = useRef(false)
   const [hasSavedRoadmap, setHasSavedRoadmap] = useState(false)
   const [isEditingSavedProfile, setIsEditingSavedProfile] = useState(false)
   const [profile, setProfile] = useState<Partial<UserProfile>>({
@@ -44,6 +45,7 @@ export default function IntakePage() {
     if (typeof window === 'undefined') return
 
     const editMode = sessionStorage.getItem('landed_edit_profile') === 'true'
+    editIntentRef.current = editMode
     setIsReturningToEdit(editMode)
 
     if (editMode) {
@@ -93,11 +95,13 @@ export default function IntakePage() {
         setHasSavedRoadmap(true)
         setProfile(savedRoadmap.profile)
         setAuthChecked(true)
-        if (isReturningToEdit) {
+        if (editIntentRef.current) {
           setIsEditingSavedProfile(true)
           setAuthMessage('Signed in. Your saved profile is ready to edit.')
         } else {
-          setAuthMessage('Signed in. You already have a saved roadmap.')
+          setIsEditingSavedProfile(false)
+          setAuthMessage('Signed in. Opening your dashboard...')
+          router.replace('/dashboard')
         }
       })
       .catch(() => {
@@ -123,7 +127,7 @@ export default function IntakePage() {
       if (savedRoadmap) {
         setHasSavedRoadmap(true)
         setProfile(savedRoadmap.profile)
-        if (isReturningToEdit) {
+        if (editIntentRef.current) {
           setIsEditingSavedProfile(true)
           setAuthMessage('Signed in. Your saved profile is ready to edit.')
         } else {
@@ -144,7 +148,7 @@ export default function IntakePage() {
       isMounted = false
       subscription.unsubscribe()
     }
-  }, [isReturningToEdit, router])
+  }, [router])
 
   const update = (key: keyof UserProfile, value: string | boolean) => {
     setProfile(prev => ({ ...prev, [key]: value }))
@@ -265,7 +269,7 @@ export default function IntakePage() {
     field: keyof UserProfile
   }) => (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
+      <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">{label}</label>
       <div className="flex gap-3">
         {['Yes', 'No'].map(opt => (
           <button
@@ -275,7 +279,7 @@ export default function IntakePage() {
             className={`flex-1 border rounded-xl py-2.5 text-sm font-medium transition-all ${
               profile[field] === (opt === 'Yes')
                 ? 'bg-gray-900 text-white border-gray-900'
-                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                : 'bg-white dark:bg-slate-900 text-gray-600 dark:text-slate-300 border-gray-200 dark:border-slate-700 hover:border-gray-400'
             }`}
           >
             {opt}
@@ -286,39 +290,39 @@ export default function IntakePage() {
   )
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center p-6">
-      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 w-full max-w-md">
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 p-6 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <div className="mx-auto w-full max-w-md rounded-3xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 shadow-sm">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center">
             <Plane className="w-5 h-5 text-white" />
           </div>
-          <h1 className="text-2xl font-semibold text-gray-900">Landed</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-slate-100">Landed</h1>
         </div>
-        <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+        <p className="text-gray-500 dark:text-slate-400 text-sm mb-6 leading-relaxed">
           Your personal roadmap for getting set up in the United States. Sign in first, then answer only the questions that match your situation.
         </p>
 
         {isReturningToEdit && !authChecked ? (
-          <div className="mb-6 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-700">
+          <div className="mb-6 rounded-2xl border border-blue-100 bg-blue-50 dark:bg-sky-950/40 p-4 text-sm text-blue-700 dark:text-sky-300">
             Opening your saved profile...
           </div>
         ) : null}
 
-        <div className="mb-6 rounded-2xl border border-gray-200 bg-gray-50 p-4 space-y-3">
-          <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+        <div className="mb-6 rounded-2xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/80 p-4 space-y-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-slate-100">
             <Mail className="h-4 w-4" />
             Email sign-in
           </div>
 
           {session ? (
-            <div className="rounded-xl bg-white border border-gray-200 px-4 py-3 text-sm text-gray-700 flex items-start gap-2">
+            <div className="rounded-xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 px-4 py-3 text-sm text-gray-700 dark:text-slate-200 flex items-start gap-2">
               <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />
               <div>
                 Signed in as <span className="font-medium">{session.user.email}</span>. Your profile choices and roadmap can now be saved.
               </div>
             </div>
           ) : isSupabaseConfigured() && !authChecked ? (
-            <p className="text-sm text-gray-500 leading-relaxed">
+            <p className="text-sm text-gray-500 dark:text-slate-400 leading-relaxed">
               Restoring your session...
             </p>
           ) : isSupabaseConfigured() ? (
@@ -328,12 +332,12 @@ export default function IntakePage() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="Enter your email"
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gray-400 transition-colors bg-white"
+                className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gray-400 transition-colors bg-white dark:bg-slate-900"
               />
 
               {codeSent && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
                     6-digit code
                   </label>
                   <input
@@ -343,7 +347,7 @@ export default function IntakePage() {
                     value={otpCode}
                     onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
                     placeholder="Enter the code from your email"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm tracking-[0.3em] focus:outline-none focus:border-gray-400 transition-colors bg-white"
+                    className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm tracking-[0.3em] focus:outline-none focus:border-gray-400 transition-colors bg-white dark:bg-slate-900"
                   />
                 </div>
               )}
@@ -361,7 +365,7 @@ export default function IntakePage() {
                   type="button"
                   onClick={verifyCode}
                   disabled={authLoading || !codeSent || otpCode.length !== 6}
-                  className="w-full border border-gray-200 rounded-xl py-2.5 text-sm font-medium text-gray-700 hover:border-gray-400 hover:bg-white transition-all disabled:opacity-50"
+                  className="w-full border border-gray-200 dark:border-slate-700 rounded-xl py-2.5 text-sm font-medium text-gray-700 dark:text-slate-200 hover:border-gray-400 hover:bg-white dark:bg-slate-900 transition-all disabled:opacity-50"
                 >
                   <span className="inline-flex items-center gap-2">
                     <KeyRound className="h-4 w-4" />
@@ -370,18 +374,18 @@ export default function IntakePage() {
                 </button>
               </div>
 
-              <p className="text-xs text-gray-500 leading-relaxed">
+              <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed">
                 We&apos;ll email you a 6-digit code. Enter it here to unlock your saved profile form.
               </p>
             </>
           ) : (
-            <p className="text-sm text-gray-500 leading-relaxed">
+            <p className="text-sm text-gray-500 dark:text-slate-400 leading-relaxed">
               Add your Supabase URL and publishable key to enable email sign-in.
             </p>
           )}
 
           {authMessage && (
-            <p className="text-xs rounded-xl bg-blue-50 text-blue-700 px-3 py-2">{authMessage}</p>
+            <p className="text-xs rounded-xl bg-blue-50 dark:bg-sky-950/40 text-blue-700 dark:text-sky-300 px-3 py-2">{authMessage}</p>
           )}
 
           {session && hasSavedRoadmap && !isEditingSavedProfile && (
@@ -389,7 +393,7 @@ export default function IntakePage() {
               <button
                 type="button"
                 onClick={openSavedRoadmap}
-                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                className="text-sm text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:text-slate-100 transition-colors"
               >
                 Open saved roadmap
               </button>
@@ -400,7 +404,7 @@ export default function IntakePage() {
                   setIsEditingSavedProfile(true)
                   setAuthMessage('Editing your saved profile now.')
                 }}
-                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                className="text-sm text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:text-slate-100 transition-colors"
               >
                 Edit saved profile
               </button>
@@ -412,21 +416,21 @@ export default function IntakePage() {
           isEditingSavedProfile || !hasSavedRoadmap ? (
             <div className="space-y-5">
               {isEditingSavedProfile && (
-                <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+                <div className="rounded-2xl border border-blue-100 bg-blue-50 dark:bg-sky-950/40 px-4 py-3 text-sm text-blue-700 dark:text-sky-300">
                   You are editing your saved profile. Update any answers below, then rebuild your roadmap to save the changes.
                 </div>
               )}
-            <div className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Current scope</p>
-              <p className="text-sm text-gray-700">Landed is currently configured for people getting set up in the United States.</p>
+            <div className="rounded-2xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/80 px-4 py-3">
+              <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-1">Current scope</p>
+              <p className="text-sm text-gray-700 dark:text-slate-200">Landed is currently configured for people getting set up in the United States.</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
                 Visa type
               </label>
               <select
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gray-400 bg-white transition-colors"
+                className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gray-400 bg-white dark:bg-slate-900 transition-colors"
                 onChange={e => update('visa_type', e.target.value)}
                 value={profile.visa_type || ''}
               >
@@ -442,28 +446,28 @@ export default function IntakePage() {
             {profile.visa_type === 'F-1' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
                     I-20 issue date
                   </label>
                   <input
                     type="date"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gray-400 transition-colors"
+                    className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gray-400 transition-colors"
                     onChange={e => update('i20_issue_date', e.target.value)}
                     value={profile.i20_issue_date || ''}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
                     Expected graduation date
                   </label>
                   <input
                     type="date"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gray-400 transition-colors"
+                    className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gray-400 transition-colors"
                     onChange={e => update('graduation_date', e.target.value)}
                     value={profile.graduation_date || ''}
                   />
-                  <p className="text-xs text-gray-500 mt-2 leading-relaxed">
+                  <p className="text-xs text-gray-500 dark:text-slate-400 mt-2 leading-relaxed">
                     We use this to time Post-OPT reminders and deadlines.
                   </p>
                 </div>
@@ -482,11 +486,11 @@ export default function IntakePage() {
             {profile.currently_in_us ? (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
                     Current employment status
                   </label>
                   <select
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gray-400 bg-white transition-colors"
+                    className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gray-400 bg-white dark:bg-slate-900 transition-colors"
                     onChange={e => update('employment_status', e.target.value)}
                     value={profile.employment_status || 'none'}
                   >
@@ -502,13 +506,13 @@ export default function IntakePage() {
                 <YesNo label="Do you have a U.S. address?" field="has_address" />
               </>
             ) : profile.currently_in_us === false ? (
-              <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-4 py-4 text-sm text-gray-500 leading-relaxed">
+              <div className="rounded-2xl border border-dashed border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-4 text-sm text-gray-500 dark:text-slate-400 leading-relaxed">
                 U.S.-specific setup questions like bank account, SSN, ITIN, address, and current employment will appear after the user is already in the U.S. For now, we&apos;ll use your origin country, visa type, and arrival status to build the roadmap.
               </div>
             ) : null}
 
             {error && (
-              <p className="text-red-500 text-sm bg-red-50 rounded-xl px-4 py-3">{error}</p>
+              <p className="text-red-500 dark:text-red-300 text-sm bg-red-50 dark:bg-red-950/40 rounded-xl px-4 py-3">{error}</p>
             )}
 
             <button
@@ -527,12 +531,12 @@ export default function IntakePage() {
             </button>
           </div>
           ) : (
-            <div className="rounded-2xl border border-gray-200 bg-white px-4 py-5 text-sm text-gray-600 leading-relaxed">
+            <div className="rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-5 text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
               Redirecting to your dashboard...
             </div>
           )
         ) : (
-          <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-4 py-5 text-sm text-gray-500 leading-relaxed">
+          <div className="rounded-2xl border border-dashed border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-5 text-sm text-gray-500 dark:text-slate-400 leading-relaxed">
             Sign in with your email code first. Once you are signed in, the form will adapt based on your answers and save the relevant profile details to your account.
           </div>
         )}
