@@ -24,3 +24,185 @@ html.dark body {
   background-color: #020617;
   color: #e2e8f0;
 }
+
+@keyframes assistant-float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes assistant-orbit {
+  0% {
+    transform: rotate(0deg) translateX(0px);
+  }
+  50% {
+    transform: rotate(180deg) translateX(4px);
+  }
+  100% {
+    transform: rotate(360deg) translateX(0px);
+  }
+}
+
+@keyframes assistant-blink {
+  0%,
+  44%,
+  100% {
+    transform: scaleY(1);
+  }
+  46%,
+  48% {
+    transform: scaleY(0.25);
+  }
+}
+
+@keyframes assistant-spark {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+.assistant-launcher {
+  animation: assistant-float 4.8s ease-in-out infinite;
+}
+
+.assistant-avatar {
+  position: relative;
+  height: 58px;
+  width: 58px;
+  flex-shrink: 0;
+}
+
+.assistant-avatar-compact {
+  height: 52px;
+  width: 52px;
+}
+
+.assistant-avatar-core {
+  position: absolute;
+  inset: 0;
+  border-radius: 22px;
+  background: linear-gradient(155deg, #c7f0ff 0%, #7dd3fc 45%, #38bdf8 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 16px 32px rgba(14, 165, 233, 0.25);
+}
+
+html.dark .assistant-avatar-core {
+  background: linear-gradient(155deg, rgba(125, 211, 252, 0.5) 0%, rgba(56, 189, 248, 0.42) 45%, rgba(14, 165, 233, 0.62) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 16px 32px rgba(2, 6, 23, 0.45);
+}
+
+.assistant-avatar-face {
+  position: absolute;
+  top: 18px;
+  left: 15px;
+  display: flex;
+  gap: 12px;
+}
+
+.assistant-eye {
+  height: 8px;
+  width: 8px;
+  border-radius: 999px;
+  background: #082f49;
+  animation: assistant-blink 5.5s ease-in-out infinite;
+}
+
+html.dark .assistant-eye {
+  background: #f8fafc;
+}
+
+.assistant-smile {
+  position: absolute;
+  left: 18px;
+  top: 32px;
+  height: 10px;
+  width: 20px;
+  border-bottom: 3px solid #075985;
+  border-radius: 0 0 999px 999px;
+}
+
+html.dark .assistant-smile {
+  border-bottom-color: #e0f2fe;
+}
+
+.assistant-orbit {
+  position: absolute;
+  inset: -3px;
+  border-radius: 26px;
+  border: 1px solid rgba(14, 165, 233, 0.22);
+  animation: assistant-orbit 7s linear infinite;
+}
+
+.assistant-orbit-two {
+  inset: -7px;
+  opacity: 0.45;
+  animation-duration: 9s;
+  animation-direction: reverse;
+}
+
+html.dark .assistant-orbit {
+  border-color: rgba(125, 211, 252, 0.16);
+}
+
+.assistant-spark {
+  position: absolute;
+  height: 8px;
+  width: 8px;
+  border-radius: 999px;
+  background: #fef08a;
+  animation: assistant-spark 2.6s ease-in-out infinite;
+}
+
+.assistant-spark-one {
+  right: -2px;
+  top: 6px;
+}
+
+.assistant-spark-two {
+  bottom: 2px;
+  left: -4px;
+  animation-delay: 1.1s;
+}
+
+html.dark .assistant-spark {
+  background: #fde68a;
+}
+
+@keyframes journey-node-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.28);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow: 0 0 0 12px rgba(56, 189, 248, 0);
+  }
+}
+
+@keyframes journey-section-float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+.journey-node-pulse {
+  animation: journey-node-pulse 2.8s ease-in-out infinite;
+}
+
+.journey-section {
+  animation: journey-section-float 7s ease-in-out infinite;
+}

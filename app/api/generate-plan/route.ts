@@ -29,6 +29,7 @@ function getCompletedSteps(profile: UserProfile) {
   }
 
   if (profile.has_address) completed.add('local_address')
+  if (profile.has_mobile_number) completed.add('mobile_number')
   if (profile.has_itin || profile.has_ssn) completed.add('itin')
   if (profile.has_ssn) completed.add('ssn_on_campus')
   if (profile.has_bank_account) completed.add('bank_account')

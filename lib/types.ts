@@ -26,8 +26,10 @@ export interface UserProfile {
   i20_issue_date?: string
   opt_start_date?: string
   graduation_date?: string
+  us_phone_number?: string
   has_ssn: boolean
   has_bank_account: boolean
+  has_mobile_number: boolean
   has_address: boolean
   has_itin: boolean
   employment_status: 'unemployed' | 'on_campus' | 'cpt' | 'opt' | 'stem_opt' | 'none'

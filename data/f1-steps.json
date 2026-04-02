@@ -2,158 +2,289 @@
   {
     "id": "i20",
     "title": "Get your I-20 from your university",
-    "description": "Your I-20 is the document that authorizes your F-1 student status. It is issued by your university's international student office (DSO). Everything else — your visa, your SSN, your OPT — depends on this document.",
+    "description": "Your I-20 is the document that authorizes your F-1 student status. It is issued by your university's international student office (DSO). Everything else \u2014 your visa, your SSN, your OPT \u2014 depends on this document.",
     "requires": [],
-    "unlocks": ["sevis_fee", "itin", "ssn_on_campus"],
+    "unlocks": [
+      "sevis_fee",
+      "itin",
+      "ssn_on_campus"
+    ],
     "official_link": "https://issc.asu.edu",
-    "documents_needed": ["Admission letter", "Passport", "Financial proof (bank statements)"],
+    "documents_needed": [
+      "Admission letter",
+      "Passport",
+      "Financial proof (bank statements)"
+    ],
     "common_mistakes": [
       "Not updating your I-20 when you change your program or extend your studies",
-      "Thinking your visa expiring means your F-1 status expired — they are different",
-      "Not carrying a physical copy — always have it on you"
+      "Thinking your visa expiring means your F-1 status expired \u2014 they are different",
+      "Not carrying a physical copy \u2014 always have it on you"
     ]
   },
   {
     "id": "sevis_fee",
     "title": "Pay the SEVIS I-901 fee",
-    "description": "A one-time $350 fee required before your visa interview. You pay this at fmjfee.com using your SEVIS ID from your I-20. Keep the payment confirmation — you'll need it at the visa interview.",
-    "requires": ["i20"],
-    "unlocks": ["visa_stamp"],
+    "description": "A one-time $350 fee required before your visa interview. You pay this at fmjfee.com using your SEVIS ID from your I-20. Keep the payment confirmation \u2014 you'll need it at the visa interview.",
+    "requires": [
+      "i20"
+    ],
+    "unlocks": [
+      "visa_stamp"
+    ],
     "official_link": "https://www.fmjfee.com",
-    "forms": ["I-901"],
-    "documents_needed": ["I-20 (for SEVIS ID number)", "Credit/debit card"],
+    "forms": [
+      "I-901"
+    ],
+    "documents_needed": [
+      "I-20 (for SEVIS ID number)",
+      "Credit/debit card"
+    ],
     "common_mistakes": [
-      "Paying after scheduling your visa interview — pay before",
-      "Losing the payment receipt — save a PDF copy"
+      "Paying after scheduling your visa interview \u2014 pay before",
+      "Losing the payment receipt \u2014 save a PDF copy"
     ]
   },
   {
     "id": "visa_stamp",
     "title": "Get your F-1 visa stamp",
-    "description": "Schedule a visa interview at a US consulate in your home country. Bring your I-20, SEVIS fee receipt, financial proof, and admission letter. The visa stamp is what lets you enter the US — it's not the same as your F-1 status.",
-    "requires": ["sevis_fee"],
-    "unlocks": ["arrive_us"],
+    "description": "Schedule a visa interview at a US consulate in your home country. Bring your I-20, SEVIS fee receipt, financial proof, and admission letter. The visa stamp is what lets you enter the US \u2014 it's not the same as your F-1 status.",
+    "requires": [
+      "sevis_fee"
+    ],
+    "unlocks": [
+      "arrive_us"
+    ],
     "official_link": "https://travel.state.gov/content/travel/en/us-visas/study/student-visa.html",
-    "documents_needed": ["Passport", "I-20", "SEVIS fee receipt", "DS-160 form", "Admission letter", "Financial proof", "Visa photo"],
+    "documents_needed": [
+      "Passport",
+      "I-20",
+      "SEVIS fee receipt",
+      "DS-160 form",
+      "Admission letter",
+      "Financial proof",
+      "Visa photo"
+    ],
     "common_mistakes": [
-      "Not scheduling early enough — interviews book up months in advance",
+      "Not scheduling early enough \u2014 interviews book up months in advance",
       "Wearing the wrong clothes for the visa photo"
     ]
   },
   {
     "id": "arrive_us",
     "title": "Arrive in the US and get your I-94",
-    "description": "When you arrive, a CBP officer will admit you. Your I-94 is automatically generated — it records your admission date and status. Check it at i94.cbp.dhs.gov within a few days of arrival. It should say 'D/S' (Duration of Status) not a specific date.",
-    "requires": ["visa_stamp"],
-    "unlocks": ["university_checkin", "local_address"],
+    "description": "When you arrive, a CBP officer will admit you. Your I-94 is automatically generated \u2014 it records your admission date and status. Check it at i94.cbp.dhs.gov within a few days of arrival. It should say 'D/S' (Duration of Status) not a specific date.",
+    "requires": [
+      "visa_stamp"
+    ],
+    "unlocks": [
+      "university_checkin",
+      "local_address"
+    ],
     "official_link": "https://i94.cbp.dhs.gov",
-    "documents_needed": ["Passport", "I-20", "Visa stamp"],
+    "documents_needed": [
+      "Passport",
+      "I-20",
+      "Visa stamp"
+    ],
     "common_mistakes": [
-      "Not checking your I-94 after arrival — errors happen and must be corrected",
-      "Arriving more than 30 days before your program start date — not allowed on F-1"
+      "Not checking your I-94 after arrival \u2014 errors happen and must be corrected",
+      "Arriving more than 30 days before your program start date \u2014 not allowed on F-1"
     ]
   },
   {
     "id": "university_checkin",
     "title": "Check in with your international student office",
     "description": "Within your first week, report your arrival to your DSO (Designated School Official). They will activate your SEVIS record. You cannot legally study or work until this is done.",
-    "requires": ["arrive_us"],
-    "unlocks": ["ssn_on_campus", "itin"],
+    "requires": [
+      "arrive_us"
+    ],
+    "unlocks": [
+      "ssn_on_campus",
+      "itin"
+    ],
     "official_link": "https://issc.asu.edu",
-    "documents_needed": ["Passport", "I-20", "I-94"],
+    "documents_needed": [
+      "Passport",
+      "I-20",
+      "I-94"
+    ],
     "common_mistakes": [
-      "Skipping this step — your SEVIS won't be activated and you'll be out of status",
-      "Waiting too long — do this in the first week"
+      "Skipping this step \u2014 your SEVIS won't be activated and you'll be out of status",
+      "Waiting too long \u2014 do this in the first week"
     ]
   },
   {
     "id": "local_address",
     "title": "Get a local US address",
     "description": "You need a physical US address to open a bank account, receive mail, and register for classes. Options: university housing (easiest), short-term rental, or staying with a friend temporarily.",
-    "requires": ["arrive_us"],
-    "unlocks": ["bank_account"],
-    "documents_needed": ["Lease agreement or housing confirmation"],
+    "requires": [
+      "arrive_us"
+    ],
+    "unlocks": [
+      "bank_account"
+    ],
+    "documents_needed": [
+      "Lease agreement or housing confirmation"
+    ],
     "common_mistakes": [
-      "Using a PO Box — banks don't accept these as a primary address",
-      "Using your university's main address — use your specific dorm or apartment address"
+      "Using a PO Box \u2014 banks don't accept these as a primary address",
+      "Using your university's main address \u2014 use your specific dorm or apartment address"
+    ]
+  },
+  {
+    "id": "mobile_number",
+    "title": "Get a U.S. mobile number",
+    "description": "A U.S. phone number makes it much easier to receive bank OTPs, landlord calls, campus alerts, delivery updates, and job follow-ups. Set one up soon after arrival through a major carrier or a prepaid provider.",
+    "requires": [
+      "arrive_us"
+    ],
+    "unlocks": [
+      "bank_account"
+    ],
+    "official_link": "https://www.fcc.gov/consumers/guides/choosing-wireless-service-plan",
+    "documents_needed": [
+      "Passport",
+      "U.S. address",
+      "Payment method"
+    ],
+    "common_mistakes": [
+      "Choosing an expensive long-term plan before checking student discounts or prepaid options",
+      "Using only your home-country number for bank and delivery verification",
+      "Forgetting to confirm network coverage around campus and housing"
     ]
   },
   {
     "id": "ssn_on_campus",
     "title": "Apply for an SSN (on-campus job route)",
     "description": "As an F-1 student, you can get an SSN if you have an on-campus job offer. Get a job offer letter from your department, then get a letter from your DSO, then visit your local Social Security Administration office.",
-    "requires": ["university_checkin"],
-    "unlocks": ["bank_account", "credit_card"],
+    "requires": [
+      "university_checkin"
+    ],
+    "unlocks": [
+      "bank_account",
+      "credit_card"
+    ],
     "official_link": "https://www.ssa.gov/ssnumber/",
-    "forms": ["SS-5"],
-    "documents_needed": ["Job offer letter from employer", "DSO support letter", "Passport", "I-20", "I-94"],
+    "forms": [
+      "SS-5"
+    ],
+    "documents_needed": [
+      "Job offer letter from employer",
+      "DSO support letter",
+      "Passport",
+      "I-20",
+      "I-94"
+    ],
     "common_mistakes": [
       "Going to SSA before you have all three letters",
-      "Going to SSA before your SEVIS is activated — wait at least 3 days after check-in"
+      "Going to SSA before your SEVIS is activated \u2014 wait at least 3 days after check-in"
     ]
   },
   {
     "id": "itin",
     "title": "Apply for an ITIN (if you can't get an SSN yet)",
     "description": "An Individual Taxpayer Identification Number lets you open a bank account and file taxes without an SSN. Apply with IRS Form W-7. You can do this without a job offer. Takes 6-11 weeks to process.",
-    "requires": ["university_checkin"],
-    "unlocks": ["bank_account"],
+    "requires": [
+      "university_checkin"
+    ],
+    "unlocks": [
+      "bank_account"
+    ],
     "official_link": "https://www.irs.gov/individuals/individual-taxpayer-identification-number",
-    "forms": ["W-7"],
-    "documents_needed": ["Passport (certified copy)", "I-20", "Visa stamp", "I-94"],
+    "forms": [
+      "W-7"
+    ],
+    "documents_needed": [
+      "Passport (certified copy)",
+      "I-20",
+      "Visa stamp",
+      "I-94"
+    ],
     "common_mistakes": [
-      "Sending your original passport — send certified copies only",
+      "Sending your original passport \u2014 send certified copies only",
       "Not attaching a tax return if required",
-      "Thinking you need an SSN to open a bank account — ITIN works"
+      "Thinking you need an SSN to open a bank account \u2014 ITIN works"
     ]
   },
   {
     "id": "bank_account",
     "title": "Open a US bank account",
-    "description": "Most banks accept an ITIN or SSN plus your I-20 and passport. Recommended: Chase, Bank of America, or a credit union. Call ahead to confirm they accept international students — some branches don't know their own policy.",
-    "requires": ["local_address", "itin"],
-    "unlocks": ["secured_credit_card", "rent_payment"],
-    "documents_needed": ["Passport", "I-20", "ITIN or SSN", "Proof of address", "Initial deposit (usually $25-100)"],
+    "description": "Most banks accept an ITIN or SSN plus your I-20 and passport. Recommended: Chase, Bank of America, or a credit union. Call ahead to confirm they accept international students \u2014 some branches don't know their own policy.",
+    "requires": [
+      "local_address",
+      "itin"
+    ],
+    "unlocks": [
+      "secured_credit_card",
+      "rent_payment"
+    ],
+    "documents_needed": [
+      "Passport",
+      "I-20",
+      "ITIN or SSN",
+      "Proof of address",
+      "Initial deposit (usually $25-100)"
+    ],
     "common_mistakes": [
-      "Going without an appointment — book online first",
-      "Not bringing your I-20 — banks often ask even if they don't advertise it",
-      "Choosing a bank with no branches near you — pick one you can walk to"
+      "Going without an appointment \u2014 book online first",
+      "Not bringing your I-20 \u2014 banks often ask even if they don't advertise it",
+      "Choosing a bank with no branches near you \u2014 pick one you can walk to"
     ]
   },
   {
     "id": "secured_credit_card",
     "title": "Get a secured credit card to build credit",
     "description": "A secured card requires a deposit (usually $200-500) that becomes your credit limit. Use it for small purchases and pay it off every month. After 6-12 months you'll have a credit score. Recommended: Discover it Secured, Capital One Secured.",
-    "requires": ["bank_account"],
-    "unlocks": ["credit_history"],
-    "documents_needed": ["SSN or ITIN", "Bank account for deposit"],
+    "requires": [
+      "bank_account"
+    ],
+    "unlocks": [
+      "credit_history"
+    ],
+    "documents_needed": [
+      "SSN or ITIN",
+      "Bank account for deposit"
+    ],
     "common_mistakes": [
-      "Not paying the full balance every month — interest rates are 25%+",
-      "Applying for too many cards at once — hurts your credit score",
-      "Closing the card after getting a regular card — keep it open for credit history length"
+      "Not paying the full balance every month \u2014 interest rates are 25%+",
+      "Applying for too many cards at once \u2014 hurts your credit score",
+      "Closing the card after getting a regular card \u2014 keep it open for credit history length"
     ]
   },
   {
     "id": "credit_history",
     "title": "Build 6+ months of credit history",
     "description": "Use your secured card for small regular purchases (groceries, gas). Pay the full balance before the due date every single month. After 6 months you'll have a credit score. After 12 months you can apply for a regular credit card and rent without a guarantor.",
-    "requires": ["secured_credit_card"],
-    "unlocks": ["rent_no_guarantor", "regular_credit_card"],
+    "requires": [
+      "secured_credit_card"
+    ],
+    "unlocks": [
+      "rent_no_guarantor",
+      "regular_credit_card"
+    ],
     "common_mistakes": [
-      "Missing a payment — even one late payment drops your score significantly",
-      "Using more than 30% of your credit limit — keep usage low"
+      "Missing a payment \u2014 even one late payment drops your score significantly",
+      "Using more than 30% of your credit limit \u2014 keep usage low"
     ]
   },
   {
     "id": "cpt_authorization",
     "title": "Apply for CPT (Curricular Practical Training)",
     "description": "CPT lets you work off-campus in a job directly related to your major while still a student. You must enroll in an internship course first. Apply through your international student office at least 7 business days before your start date.",
-    "requires": ["university_checkin"],
-    "unlocks": ["ssn_via_cpt"],
+    "requires": [
+      "university_checkin"
+    ],
+    "unlocks": [
+      "ssn_via_cpt"
+    ],
     "official_link": "https://issc.asu.edu/f-1j-1-students/employment/f1-cpt",
-    "documents_needed": ["Job offer letter", "Internship course enrollment proof", "I-20"],
+    "documents_needed": [
+      "Job offer letter",
+      "Internship course enrollment proof",
+      "I-20"
+    ],
     "common_mistakes": [
-      "Starting work before CPT is authorized — this is a serious status violation",
+      "Starting work before CPT is authorized \u2014 this is a serious status violation",
       "Applying with less than 7 business days before start date",
       "Not enrolling in the required internship course"
     ]
@@ -161,17 +292,29 @@
   {
     "id": "opt_application",
     "title": "Apply for Post-OPT",
-    "description": "Optional Practical Training lets you work in your field after graduation for 12 months. Apply up to 90 days before your graduation date. USCIS takes 3-5 months to process — apply early. You cannot start work until your EAD card arrives.",
-    "requires": ["university_checkin"],
-    "unlocks": ["stem_opt"],
+    "description": "Optional Practical Training lets you work in your field after graduation for 12 months. Apply up to 90 days before your graduation date. USCIS takes 3-5 months to process \u2014 apply early. You cannot start work until your EAD card arrives.",
+    "requires": [
+      "university_checkin"
+    ],
+    "unlocks": [
+      "stem_opt"
+    ],
     "deadline_trigger": "graduation_date",
     "deadline_days": -90,
     "official_link": "https://www.uscis.gov/working-in-the-united-states/students-and-exchange-visitors/optional-practical-training-opt-for-f-1-students",
-    "forms": ["I-765"],
-    "documents_needed": ["I-20 with OPT recommendation from DSO", "Passport", "I-94", "Previous EAD (if any)", "$410 USCIS filing fee"],
+    "forms": [
+      "I-765"
+    ],
+    "documents_needed": [
+      "I-20 with OPT recommendation from DSO",
+      "Passport",
+      "I-94",
+      "Previous EAD (if any)",
+      "$410 USCIS filing fee"
+    ],
     "common_mistakes": [
-      "Applying too late — USCIS takes months and you can't work until EAD arrives",
-      "Starting work before EAD card arrives — automatic status violation",
+      "Applying too late \u2014 USCIS takes months and you can't work until EAD arrives",
+      "Starting work before EAD card arrives \u2014 automatic status violation",
       "Not paying the $300 OPT Case Management Payment to your university first"
     ]
   },
@@ -179,17 +322,29 @@
     "id": "stem_opt",
     "title": "Apply for STEM OPT Extension",
     "description": "If your degree is in a STEM field, you can extend your OPT by 24 months. You must apply before your current OPT expires. Your employer must be enrolled in E-Verify. CRITICAL: Apply within 60 days of your new I-20 issue date or you are automatically denied.",
-    "requires": ["opt_application"],
-    "unlocks": ["h1b_sponsorship"],
+    "requires": [
+      "opt_application"
+    ],
+    "unlocks": [
+      "h1b_sponsorship"
+    ],
     "deadline_trigger": "i20_issue_date",
     "deadline_days": 60,
     "official_link": "https://www.uscis.gov/working-in-the-united-states/students-and-exchange-visitors/optional-practical-training-extension-for-stem-students-stem-opt",
-    "forms": ["I-765", "I-983"],
-    "documents_needed": ["STEM OPT I-20", "Current EAD", "I-983 signed by employer", "Employer E-Verify company ID"],
+    "forms": [
+      "I-765",
+      "I-983"
+    ],
+    "documents_needed": [
+      "STEM OPT I-20",
+      "Current EAD",
+      "I-983 signed by employer",
+      "Employer E-Verify company ID"
+    ],
     "common_mistakes": [
-      "Missing the 60-day window from I-20 issue date — automatic denial, no exceptions",
+      "Missing the 60-day window from I-20 issue date \u2014 automatic denial, no exceptions",
       "Employer not completing their section of I-983 before you apply",
-      "Employer not enrolled in E-Verify — required, cannot be waived",
+      "Employer not enrolled in E-Verify \u2014 required, cannot be waived",
       "Not filing Form I-983 annual self-evaluation on time"
     ]
   }

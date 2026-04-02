@@ -36,6 +36,7 @@ export default function IntakePage() {
     country_of_origin: 'United States',
     has_ssn: false,
     has_bank_account: false,
+    has_mobile_number: false,
     has_address: false,
     has_itin: false,
     employment_status: 'none',
@@ -500,6 +501,22 @@ export default function IntakePage() {
                   </select>
                 </div>
 
+                <YesNo label="Do you have a U.S. mobile number?" field="has_mobile_number" />
+
+                {profile.has_mobile_number && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
+                      U.S. phone number
+                    </label>
+                    <input
+                      type="tel"
+                      className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gray-400 transition-colors bg-white dark:bg-slate-900"
+                      onChange={e => update('us_phone_number', e.target.value)}
+                      value={profile.us_phone_number || ''}
+                      placeholder="(480) 555-0123"
+                    />
+                  </div>
+                )}
                 <YesNo label="Do you have a U.S. bank account?" field="has_bank_account" />
                 <YesNo label="Do you have an SSN?" field="has_ssn" />
                 <YesNo label="Do you have an ITIN?" field="has_itin" />

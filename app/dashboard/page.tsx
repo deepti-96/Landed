@@ -7,6 +7,7 @@ import { calculateDeadline } from '@/lib/deadlines'
 import { getTaxGuidance } from '@/lib/tax'
 import { getCurrentSession, getSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase'
 import { loadRoadmapFromLocalStorage, loadRoadmapFromSupabase, saveRoadmapToLocalStorage, saveRoadmapToSupabase } from '@/lib/roadmap-storage'
+import ChatAssistant from '@/components/ChatAssistant'
 import DeadlineCard from '@/components/DeadlineCard'
 import ProfileEditorDialog from '@/components/ProfileEditorDialog'
 import RoadmapSection from '@/components/RoadmapSection'
@@ -24,7 +25,7 @@ const ROADMAP_SECTIONS = [
     id: 'arrival',
     title: 'Arrival In The U.S.',
     subtitle: 'Get your first-week arrival tasks done so your student record and address are in place.',
-    stepIds: ['arrive_us', 'university_checkin', 'local_address'],
+    stepIds: ['arrive_us', 'university_checkin', 'local_address', 'mobile_number'],
   },
   {
     id: 'identity-banking',
@@ -168,6 +169,7 @@ export default function Dashboard() {
   }
 
 
+
   const openProfileEditor = () => {
     setEditorProfile(profile)
     setEditorError('')
@@ -283,7 +285,7 @@ export default function Dashboard() {
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">Your journey</p>
                 <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">A roadmap you can actually follow</h1>
                 <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-                  Work through the brightest cards first. Completed milestones recede into the background, and future milestones stay visible so you always know what unlocks next.
+                  Follow the path one chapter at a time. The brightest cards are live right now, completed moves drift into the background, and locked moves stay on the horizon so the journey always feels legible.
                 </p>
               </div>
               <div className="rounded-2xl bg-slate-50 dark:bg-slate-800 px-4 py-3 text-right">
@@ -336,8 +338,8 @@ export default function Dashboard() {
               </div>
               <p className="mt-3 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
                 {doneSteps.length > 0
-                  ? `You have already completed ${doneSteps.length} milestone${doneSteps.length === 1 ? '' : 's'}. Keep moving and the locked parts of the path will start opening up.`
-                  : 'Start with your first bright milestone and this roadmap will unlock itself step by step.'}
+                  ? `You have already completed ${doneSteps.length} milestone${doneSteps.length === 1 ? '' : 's'}. Keep moving and the next chapter will keep opening up in front of you.`
+                  : 'Start with your first bright milestone and the path will unfold one chapter at a time.'}
               </p>
             </div>
           </div>
@@ -383,6 +385,7 @@ export default function Dashboard() {
           </section>
         )}
 
+
         {deadlineSteps.length > 0 && (
           <section className="mb-8">
             <div className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
@@ -408,19 +411,40 @@ export default function Dashboard() {
           </section>
         )}
 
-        <section className="space-y-8">
-          {roadmapSections.map(section => (
+        <section className="relative space-y-8">
+          <div className="mb-6 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+            <div className="rounded-[32px] border border-white/70 bg-white/80 p-6 shadow-[0_30px_70px_-42px_rgba(15,23,42,0.35)] backdrop-blur dark:border-slate-800 dark:bg-slate-950/70 dark:shadow-none">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400 dark:text-slate-500">Journey map</p>
+              <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950 dark:text-slate-50">A guided path, not just a checklist</h2>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 dark:text-slate-300">Each chapter below is designed to feel like a stage of arrival, setup, and independence. Tap the bright cards first, and let the locked parts sit on the horizon until they become real.</p>
+            </div>
+            <div className="rounded-[32px] border border-white/70 bg-white/80 p-6 shadow-[0_30px_70px_-42px_rgba(15,23,42,0.35)] backdrop-blur dark:border-slate-800 dark:bg-slate-950/70 dark:shadow-none">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400 dark:text-slate-500">How to use this</p>
+              <div className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
+                <p><span className="font-semibold text-slate-900 dark:text-slate-100">Bright cards</span> are the strongest next move.</p>
+                <p><span className="font-semibold text-slate-900 dark:text-slate-100">Soft cards</span> are behind you and stay visible for context.</p>
+                <p><span className="font-semibold text-slate-900 dark:text-slate-100">Muted cards</span> are waiting for earlier steps to unlock them.</p>
+              </div>
+            </div>
+          </div>
+
+          {roadmapSections.map((section, index) => (
             <RoadmapSection
               key={section.id}
               title={section.title}
               subtitle={section.subtitle}
               steps={section.steps}
               profile={profile}
+              sectionIndex={index}
               onStepClick={handleStepClick}
             />
           ))}
         </section>
       </main>
+
+      <ChatAssistant profile={profile} plan={plan} />
+
+
 
       <ProfileEditorDialog
         open={editorOpen}

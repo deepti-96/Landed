@@ -149,6 +149,20 @@ export default function ProfileEditorDialog({ open, profile, loading, error, onC
                     </select>
                   </div>
 
+                  {yesNo('Do you have a U.S. mobile number?', 'has_mobile_number')}
+
+                  {draft.has_mobile_number && (
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">U.S. phone number</label>
+                      <input
+                        type="tel"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm transition-colors focus:border-slate-400 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                        value={draft.us_phone_number || ''}
+                        onChange={e => update('us_phone_number', e.target.value)}
+                        placeholder="(480) 555-0123"
+                      />
+                    </div>
+                  )}
                   {yesNo('Do you have a U.S. bank account?', 'has_bank_account')}
                   {yesNo('Do you have an SSN?', 'has_ssn')}
                   {yesNo('Do you have an ITIN?', 'has_itin')}
