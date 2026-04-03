@@ -1,20 +1,30 @@
 # Landed
 
-Landed is a Next.js app that helps students in the United States track immigration, setup, and compliance tasks through a personalized roadmap.
+Landed is a Next.js app for international students getting set up in the United States. It turns profile answers into a personalized roadmap with milestones, deadlines, tax guidance, and an in-app assistant.
 
 ## What the app does
 
 - Signs users in with Supabase email OTP
 - Saves profile answers and roadmap data to Supabase and local storage
 - Builds a personalized roadmap for U.S. setup and F-1 style milestones
-- Shows a scrollable milestone roadmap with completed, open, and locked steps
+- Shows a chapter-style roadmap with completed, open, and locked steps
 - Surfaces deadline cards and tax guidance when relevant
-- Lets users open a step drawer for explanations and draft emails
+- Lets users open a step drawer for explanations, official links, and draft help
+- Includes an in-app assistant for roadmap questions and next-step guidance
 - Supports light mode and dark mode
 
 ## Current scope
 
-The current product flow is focused on users getting set up in the United States.
+Landed is currently focused on users getting set up in the United States.
+
+It is built around:
+- roadmap guidance
+- profile-based milestone tracking
+- deadline awareness
+- tax reminders and guidance
+- contextual assistant help
+
+It does not currently handle filing or submitting forms.
 
 ## Tech stack
 
@@ -39,7 +49,7 @@ npm install
 cp .env.example .env.local
 ```
 
-Fill in `.env.local` with your real values:
+Fill in `.env.local` with your values:
 
 ```env
 GROQ_API_KEY=your_groq_api_key_here
@@ -70,7 +80,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-For a cleaner production-like local test:
+For a production-like local test:
 
 ```bash
 npm run build
@@ -91,8 +101,9 @@ npm run lint
 1. Sign in with an emailed 6-digit code
 2. Fill in or edit your saved profile
 3. Build your roadmap
-4. Review milestone sections on the dashboard
-5. Open any step for details, official links, and draft help
+4. Move through milestone chapters on the dashboard
+5. Open any step for more detail and official links
+6. Ask the assistant for help understanding what to do next
 
 ## Main app structure
 
@@ -102,11 +113,14 @@ landed/
 │   ├── page.tsx
 │   ├── dashboard/page.tsx
 │   └── api/
+│       ├── chat-assistant/
 │       ├── generate-plan/
 │       ├── explain-step/
 │       └── draft-message/
 ├── components/
+│   ├── ChatAssistant.tsx
 │   ├── DeadlineCard.tsx
+│   ├── ProfileEditorDialog.tsx
 │   ├── RoadmapNode.tsx
 │   ├── RoadmapSection.tsx
 │   ├── StepDrawer.tsx
@@ -125,7 +139,7 @@ landed/
 
 ## Notes about roadmap logic
 
-- Roadmap generation is currently deterministic in the API route
+- Roadmap generation is deterministic in the API route
 - Saved profile answers affect which steps are done, open now, or blocked
 - OPT timing uses graduation date
 - ITIN should not appear when the user already has an SSN
@@ -158,7 +172,7 @@ rm -rf .next
 npm run dev
 ```
 
-### App works in build mode but feels slow in dev
+### App feels slower in dev than in production
 
 `next dev` is slower because it recompiles and does extra development checks. Use `npm run build && npm run start` to test production-like performance.
 
