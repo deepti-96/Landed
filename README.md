@@ -1,4 +1,4 @@
-# Landed
+# Landed 
 
 Landed is a Next.js app for international students getting set up in the United States. It turns profile answers into a personalized roadmap with milestones, deadlines, tax guidance, and an in-app assistant.
 
