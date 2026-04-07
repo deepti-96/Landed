@@ -72,7 +72,7 @@ In Supabase:
 4. Add `http://localhost:3000` to redirect URLs
 5. Run the SQL in [supabase-schema.sql](/Users/deepti.r.kumar/Desktop/Documents/Projects/landed/supabase-schema.sql) in the SQL Editor
 
-### 4. Start the app
+### 4. Start the app 
 
 ```bash
 npm run dev
