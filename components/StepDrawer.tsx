@@ -96,11 +96,50 @@ export default function StepDrawer({ step, profile, open, onClose }: Props) {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // Format markdown-style bold and bullets simply
-  const formatText = (text: string) => {
-    return text
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\n/g, '<br/>')
+  const renderInlineText = (text: string) => {
+    const segments = text.split(/(\*\*.*?\*\*)/g)
+
+    return segments.map((segment, index) => {
+      const match = segment.match(/^\*\*(.*?)\*\*$/)
+      if (match) {
+        return <strong key={`${segment}-${index}`}>{match[1]}</strong>
+      }
+
+      return segment
+    })
+  }
+
+  const renderExplanation = (text: string) => {
+    return text.split('\n').map((line, index) => {
+      const trimmed = line.trim()
+
+      if (!trimmed) {
+        return <div key={`spacer-${index}`} className="h-3" />
+      }
+
+      if (/^\*\*(.*?)\*\*$/.test(trimmed)) {
+        return (
+          <p key={`heading-${index}`} className="font-semibold text-gray-900 dark:text-slate-100">
+            {renderInlineText(trimmed)}
+          </p>
+        )
+      }
+
+      if (/^[-*]\s+/.test(trimmed)) {
+        return (
+          <p key={`bullet-${index}`} className="pl-4 -indent-4">
+            <span aria-hidden="true" className="mr-2">•</span>
+            {renderInlineText(trimmed.replace(/^[-*]\s+/, ''))}
+          </p>
+        )
+      }
+
+      return (
+        <p key={`line-${index}`}>
+          {renderInlineText(line)}
+        </p>
+      )
+    })
   }
 
   if (!open) return null
@@ -146,10 +185,9 @@ export default function StepDrawer({ step, profile, open, onClose }: Props) {
               </div>
             )}
             {explanation && (
-              <div
-                className="text-sm text-gray-700 leading-relaxed prose-sm dark:text-slate-300"
-                dangerouslySetInnerHTML={{ __html: formatText(explanation) }}
-              />
+              <div className="space-y-2 text-sm text-gray-700 leading-relaxed dark:text-slate-300">
+                {renderExplanation(explanation)}
+              </div>
             )}
           </div>
 
