@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { StepWithStatus, UserProfile } from '@/lib/types'
+import { getCurrentSession } from '@/lib/supabase'
 import { Loader2, Mic, MicOff, Send, Sparkles, Volume2, X } from 'lucide-react'
 
 interface Props {
@@ -108,9 +109,16 @@ export default function ChatAssistant({ profile, plan }: Props) {
     setLoading(true)
 
     try {
+      const session = await getCurrentSession()
+      const accessToken = session?.access_token
+      if (!accessToken) throw new Error('No session')
+
       const res = await fetch('/api/chat-assistant', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
         body: JSON.stringify({
           message: trimmed,
           messages: nextMessages,
@@ -129,7 +137,7 @@ export default function ChatAssistant({ profile, plan }: Props) {
         ...current,
         {
           role: 'assistant',
-          content: 'I hit a snag answering that. Try again in a moment, or open one of your roadmap steps for more detail.',
+          content: 'I hit a snag answering that. Please make sure you are signed in and try again, or open one of your roadmap steps for more detail.',
         },
       ])
     } finally {

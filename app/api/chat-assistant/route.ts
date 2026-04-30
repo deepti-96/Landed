@@ -1,11 +1,28 @@
 import Groq from 'groq-sdk'
 import type { ChatCompletionMessageParam } from 'groq-sdk/resources/chat/completions'
 import { NextRequest, NextResponse } from 'next/server'
+import { enforceRateLimit, requireAuthenticatedUser } from '@/lib/api-auth'
 
 const client = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
 export async function POST(req: NextRequest) {
   try {
+    const authResult = await requireAuthenticatedUser(req)
+    if ('error' in authResult) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    }
+
+    const rateLimitResult = enforceRateLimit(`chat-assistant:${authResult.user.id}`)
+    if (rateLimitResult) {
+      return NextResponse.json(
+        { error: rateLimitResult.error },
+        {
+          status: rateLimitResult.status,
+          headers: { 'Retry-After': String(rateLimitResult.retryAfterSeconds) },
+        }
+      )
+    }
+
     const { message, messages = [], profile, plan } = await req.json()
 
     const compactPlan = Array.isArray(plan)

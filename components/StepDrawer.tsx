@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { StepWithStatus, UserProfile } from '@/lib/types'
+import { getCurrentSession } from '@/lib/supabase'
 import { X, ExternalLink, Mail, Copy, Check, Loader2 } from 'lucide-react'
 
 interface Props {
@@ -38,9 +39,16 @@ export default function StepDrawer({ step, profile, open, onClose }: Props) {
   const loadExplanation = async () => {
     setLoadingExplanation(true)
     try {
+      const session = await getCurrentSession()
+      const accessToken = session?.access_token
+      if (!accessToken) throw new Error('No session')
+
       const res = await fetch('/api/explain-step', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
         body: JSON.stringify({ step, profile }),
       })
       const reader = res.body?.getReader()
@@ -58,7 +66,7 @@ export default function StepDrawer({ step, profile, open, onClose }: Props) {
         }
       }
     } catch (e) {
-      setExplanation('Failed to load explanation. Check your API key.')
+      setExplanation('Failed to load explanation. Please make sure you are signed in and try again.')
     } finally {
       setLoadingExplanation(false)
     }
@@ -68,9 +76,16 @@ export default function StepDrawer({ step, profile, open, onClose }: Props) {
     setLoadingDraft(true)
     setDraft('')
     try {
+      const session = await getCurrentSession()
+      const accessToken = session?.access_token
+      if (!accessToken) throw new Error('No session')
+
       const res = await fetch('/api/draft-message', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
         body: JSON.stringify({ type: draftType, profile, step }),
       })
       const reader = res.body?.getReader()
@@ -84,7 +99,7 @@ export default function StepDrawer({ step, profile, open, onClose }: Props) {
         setDraft(text)
       }
     } catch (e) {
-      setDraft('Failed to generate draft.')
+      setDraft('Failed to generate draft. Please make sure you are signed in and try again.')
     } finally {
       setLoadingDraft(false)
     }
