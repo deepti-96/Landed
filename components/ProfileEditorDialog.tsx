@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import type { UserProfile } from '@/lib/types'
+import { isSupportedVisaType, VISA_OPTIONS } from '@/lib/visa'
 import { X } from 'lucide-react'
 
 interface Props {
@@ -12,7 +13,6 @@ interface Props {
   onSave: (profile: UserProfile) => void
 }
 
-const VISA_TYPES = ['F-1', 'J-1', 'H-1B', 'O-1', 'L-1', 'Other']
 const EMPLOYMENT_OPTIONS = [
   { value: 'none', label: 'Not working yet' },
   { value: 'on_campus', label: 'On-campus job' },
@@ -57,7 +57,7 @@ export default function ProfileEditorDialog({ open, profile, loading, error, onC
     </div>
   )
 
-  const disabled = !draft.visa_type || draft.currently_in_us === undefined
+  const disabled = !draft.visa_type || draft.currently_in_us === undefined || !isSupportedVisaType(draft.visa_type)
 
   return (
     <>
@@ -94,10 +94,20 @@ export default function ProfileEditorDialog({ open, profile, loading, error, onC
                   onChange={e => update('visa_type', e.target.value)}
                 >
                   <option value="" disabled>Select your visa type</option>
-                  {VISA_TYPES.map(visa => (
-                    <option key={visa} value={visa}>{visa}</option>
+                  {VISA_OPTIONS.map(option => (
+                    <option key={option.value} value={option.value} disabled={!option.supported}>
+                      {option.label}
+                    </option>
                   ))}
                 </select>
+                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  Roadmap generation is currently available for F-1 students. Additional visa types are planned.
+                </p>
+                {draft.visa_type && !isSupportedVisaType(draft.visa_type) && (
+                  <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
+                    This visa type is not supported yet. Switch to F-1 to save and rebuild a roadmap today.
+                  </p>
+                )}
               </div>
 
               {yesNo('Are you currently in the United States?', 'currently_in_us')}
