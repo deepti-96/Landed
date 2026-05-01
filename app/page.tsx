@@ -5,9 +5,9 @@ import type { Session } from '@supabase/supabase-js'
 import { UserProfile } from '@/lib/types'
 import { getCurrentSession, getSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase'
 import { loadRoadmapFromLocalStorage, loadRoadmapFromSupabase, saveRoadmapToLocalStorage, saveRoadmapToSupabase } from '@/lib/roadmap-storage'
+import { isSupportedVisaType, VISA_OPTIONS } from '@/lib/visa'
 import { CheckCircle2, KeyRound, Mail, Plane } from 'lucide-react'
 
-const VISA_TYPES = ['F-1', 'J-1', 'H-1B', 'O-1', 'L-1', 'Other']
 const EMPLOYMENT_OPTIONS = [
   { value: 'none', label: 'Not working yet' },
   { value: 'on_campus', label: 'On-campus job' },
@@ -228,6 +228,11 @@ export default function IntakePage() {
       return
     }
 
+    if (!isSupportedVisaType(profile.visa_type)) {
+      setError('Landed currently supports roadmap generation for F-1 students only.')
+      return
+    }
+
     setLoading(true)
     setError('')
 
@@ -238,9 +243,10 @@ export default function IntakePage() {
         body: JSON.stringify(profile),
       })
 
-      if (!res.ok) throw new Error('API error')
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'API error')
 
-      const { plan } = await res.json()
+      const { plan } = data
       saveRoadmapToLocalStorage(profile, plan)
       sessionStorage.setItem('landed_profile_updated', 'true')
       sessionStorage.removeItem('landed_edit_profile')
@@ -252,8 +258,8 @@ export default function IntakePage() {
           console.error('Background roadmap save failed:', error)
         })
       }
-    } catch (_e) {
-      setError('Something went wrong. Check your API key and Supabase setup.')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Something went wrong. Check your API key and Supabase setup.')
       setLoading(false)
     }
   }
@@ -436,10 +442,20 @@ export default function IntakePage() {
                 value={profile.visa_type || ''}
               >
                 <option value="" disabled>Select your visa type</option>
-                {VISA_TYPES.map(v => (
-                  <option key={v} value={v}>{v}</option>
+                {VISA_OPTIONS.map(option => (
+                  <option key={option.value} value={option.value} disabled={!option.supported}>
+                    {option.label}
+                  </option>
                 ))}
               </select>
+              <p className="mt-2 text-xs text-gray-500 dark:text-slate-400">
+                Roadmap generation is currently available for F-1 students. Additional visa types are planned.
+              </p>
+              {profile.visa_type && !isSupportedVisaType(profile.visa_type) && (
+                <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
+                  This visa type is not supported yet. Choose F-1 to build a roadmap today.
+                </p>
+              )}
             </div>
 
             <YesNo label="Are you currently in the United States?" field="currently_in_us" />
@@ -534,7 +550,7 @@ export default function IntakePage() {
 
             <button
               onClick={handleSubmit}
-              disabled={loading || !profile.visa_type || !profile.country_of_origin || profile.currently_in_us === undefined}
+              disabled={loading || !profile.visa_type || !profile.country_of_origin || profile.currently_in_us === undefined || !isSupportedVisaType(profile.visa_type)}
               className="w-full bg-gray-900 text-white rounded-xl py-3 text-sm font-medium hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
               {loading ? (
