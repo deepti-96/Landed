@@ -8,20 +8,31 @@ function formatDate(date: Date) {
   })
 }
 
+function getStartOfDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+}
+
 export function getTaxGuidance(
   profile: UserProfile,
   today = new Date()
 ): TaxGuidance | null {
   if (!profile.was_in_us_last_tax_year) return null
 
-  const filingYear = today.getFullYear()
+  const currentDay = getStartOfDay(today)
+  const filingYear = currentDay.getFullYear()
   const taxYear = filingYear - 1
   const hadIncome = Boolean(profile.had_us_income_last_tax_year)
   const deadlineDate = hadIncome
     ? new Date(filingYear, 3, 15)
     : new Date(filingYear, 5, 15)
+  const normalizedDeadline = getStartOfDay(deadlineDate)
+  const daysUntilDeadline = Math.ceil(
+    (normalizedDeadline.getTime() - currentDay.getTime()) / (1000 * 60 * 60 * 24)
+  )
 
-  const status = today > deadlineDate ? 'overdue' : 'due_now'
+  const status =
+    daysUntilDeadline < 0 ? 'overdue' :
+    daysUntilDeadline <= 30 ? 'due_now' : 'upcoming'
   const deadline = formatDate(deadlineDate)
 
   if (hadIncome) {
