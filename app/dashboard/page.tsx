@@ -347,11 +347,23 @@ export default function Dashboard() {
 
         {taxGuidance && (
           <section className="mb-8">
-            <div className={`rounded-[32px] border p-5 ${taxGuidance.status === 'overdue' ? 'border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/40' : 'border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/40'}`}>
+            <div className={`rounded-[32px] border p-5 ${
+              taxGuidance.status === 'overdue'
+                ? 'border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/40'
+                : taxGuidance.status === 'due_now'
+                  ? 'border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/40'
+                  : 'border-sky-200 dark:border-sky-900/50 bg-sky-50 dark:bg-sky-950/40'
+            }`}>
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
-                    <AlertTriangle className={`h-4 w-4 ${taxGuidance.status === 'overdue' ? 'text-red-600' : 'text-amber-600'}`} />
+                    <AlertTriangle className={`h-4 w-4 ${
+                      taxGuidance.status === 'overdue'
+                        ? 'text-red-600'
+                        : taxGuidance.status === 'due_now'
+                          ? 'text-amber-600'
+                          : 'text-sky-600'
+                    }`} />
                     Tax filing for {taxGuidance.taxYear}
                   </div>
                   <p className="mb-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">{taxGuidance.summary}</p>
@@ -367,8 +379,18 @@ export default function Dashboard() {
                   </ul>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className={`text-sm font-semibold ${taxGuidance.status === 'overdue' ? 'text-red-700 dark:text-red-300' : 'text-amber-700 dark:text-amber-300'}`}>
-                    {taxGuidance.status === 'overdue' ? 'Overdue' : 'Action needed'}
+                  <p className={`text-sm font-semibold ${
+                    taxGuidance.status === 'overdue'
+                      ? 'text-red-700 dark:text-red-300'
+                      : taxGuidance.status === 'due_now'
+                        ? 'text-amber-700 dark:text-amber-300'
+                        : 'text-sky-700 dark:text-sky-300'
+                  }`}>
+                    {taxGuidance.status === 'overdue'
+                      ? 'Overdue'
+                      : taxGuidance.status === 'due_now'
+                        ? 'Action needed'
+                        : 'Upcoming'}
                   </p>
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Deadline: {taxGuidance.deadline}</p>
                 </div>
