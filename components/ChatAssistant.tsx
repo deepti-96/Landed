@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { StepWithStatus, UserProfile } from '@/lib/types'
+import { getErrorMessageFromResponse } from '@/lib/api-client'
 import { getCurrentSession } from '@/lib/supabase'
 import { Loader2, Mic, MicOff, Send, Sparkles, Volume2, X } from 'lucide-react'
 
@@ -127,17 +128,21 @@ export default function ChatAssistant({ profile, plan }: Props) {
         }),
       })
 
-      if (!res.ok) throw new Error('Chat failed')
+      if (!res.ok) {
+        throw new Error(await getErrorMessageFromResponse(res, 'Chat failed'))
+      }
 
       const data = await res.json()
       setMessages(current => [...current, { role: 'assistant', content: data.reply }])
       speak(data.reply)
-    } catch (_error) {
+    } catch (error) {
       setMessages(current => [
         ...current,
         {
           role: 'assistant',
-          content: 'I hit a snag answering that. Please make sure you are signed in and try again, or open one of your roadmap steps for more detail.',
+          content: error instanceof Error && error.message
+            ? error.message
+            : 'I hit a snag answering that. Please make sure you are signed in and try again, or open one of your roadmap steps for more detail.',
         },
       ])
     } finally {

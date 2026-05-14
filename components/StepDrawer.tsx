@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { StepWithStatus, UserProfile } from '@/lib/types'
+import { getErrorMessageFromResponse } from '@/lib/api-client'
 import { getCurrentSession } from '@/lib/supabase'
 import { X, ExternalLink, Mail, Copy, Check, Loader2 } from 'lucide-react'
 
@@ -51,6 +52,9 @@ export default function StepDrawer({ step, profile, open, onClose }: Props) {
         },
         body: JSON.stringify({ step, profile }),
       })
+      if (!res.ok) {
+        throw new Error(await getErrorMessageFromResponse(res, 'Failed to load explanation.'))
+      }
       const reader = res.body?.getReader()
       const decoder = new TextDecoder()
       if (!reader) return
@@ -65,8 +69,12 @@ export default function StepDrawer({ step, profile, open, onClose }: Props) {
           explanationRef.current.scrollTop = explanationRef.current.scrollHeight
         }
       }
-    } catch (e) {
-      setExplanation('Failed to load explanation. Please make sure you are signed in and try again.')
+    } catch (error) {
+      setExplanation(
+        error instanceof Error && error.message
+          ? error.message
+          : 'Failed to load explanation. Please make sure you are signed in and try again.'
+      )
     } finally {
       setLoadingExplanation(false)
     }
@@ -88,6 +96,9 @@ export default function StepDrawer({ step, profile, open, onClose }: Props) {
         },
         body: JSON.stringify({ type: draftType, profile, step }),
       })
+      if (!res.ok) {
+        throw new Error(await getErrorMessageFromResponse(res, 'Failed to generate draft.'))
+      }
       const reader = res.body?.getReader()
       const decoder = new TextDecoder()
       if (!reader) return
@@ -98,8 +109,12 @@ export default function StepDrawer({ step, profile, open, onClose }: Props) {
         text += decoder.decode(value, { stream: true })
         setDraft(text)
       }
-    } catch (e) {
-      setDraft('Failed to generate draft. Please make sure you are signed in and try again.')
+    } catch (error) {
+      setDraft(
+        error instanceof Error && error.message
+          ? error.message
+          : 'Failed to generate draft. Please make sure you are signed in and try again.'
+      )
     } finally {
       setLoadingDraft(false)
     }
