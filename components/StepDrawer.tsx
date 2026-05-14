@@ -164,6 +164,18 @@ export default function StepDrawer({ step, profile, open, onClose }: Props) {
         )
       }
 
+      const numberedMatch = trimmed.match(/^(\d+)\.\s+(.+)$/)
+      if (numberedMatch) {
+        return (
+          <p key={`numbered-${index}`} className="pl-6 -indent-6">
+            <span className="mr-2 font-semibold text-gray-900 dark:text-slate-100">
+              {numberedMatch[1]}.
+            </span>
+            {renderInlineText(numberedMatch[2])}
+          </p>
+        )
+      }
+
       return (
         <p key={`line-${index}`}>
           {renderInlineText(line)}
