@@ -2,6 +2,7 @@ import Groq from 'groq-sdk'
 import type { ChatCompletionMessageParam } from 'groq-sdk/resources/chat/completions'
 import { NextRequest, NextResponse } from 'next/server'
 import { enforceRateLimit, requireAuthenticatedUser } from '@/lib/api-auth'
+import { validateChatAssistantPayload } from '@/lib/ai-validation'
 
 const client = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
@@ -23,7 +24,12 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { message, messages = [], profile, plan } = await req.json()
+    const payload = validateChatAssistantPayload(await req.json())
+    if (!payload.ok) {
+      return NextResponse.json({ error: payload.error }, { status: 400 })
+    }
+
+    const { message, messages = [], profile, plan } = payload.data
 
     const compactPlan = Array.isArray(plan)
       ? plan.map((step: any) => ({

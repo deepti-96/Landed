@@ -2,6 +2,7 @@ import Groq from 'groq-sdk'
 import { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { enforceRateLimit, requireAuthenticatedUser } from '@/lib/api-auth'
+import { validateExplainStepPayload } from '@/lib/ai-validation'
 
 const client = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
@@ -23,7 +24,12 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { step, profile } = await req.json()
+    const payload = validateExplainStepPayload(await req.json())
+    if (!payload.ok) {
+      return NextResponse.json({ error: payload.error }, { status: 400 })
+    }
+
+    const { step, profile } = payload.data
 
     const prompt = `
 You are a friendly, clear immigration navigator helping an international student.
