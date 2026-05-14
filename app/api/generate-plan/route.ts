@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import f1Steps from '@/data/f1-steps.json'
 import { StepWithStatus, UserProfile, VisaStep } from '@/lib/types'
-import { isSupportedVisaType } from '@/lib/visa'
+import { validateRoadmapProfile } from '@/lib/profile-validation'
 
 function getDaysUntil(dateString?: string) {
   if (!dateString) return null
@@ -138,9 +138,10 @@ function buildPlan(profile: UserProfile) {
 export async function POST(req: NextRequest) {
   try {
     const profile = (await req.json()) as UserProfile
-    if (!isSupportedVisaType(profile.visa_type)) {
+    const validationError = validateRoadmapProfile(profile)
+    if (validationError) {
       return NextResponse.json(
-        { error: 'Landed currently supports roadmap generation for F-1 students only.' },
+        { error: validationError },
         { status: 400 }
       )
     }
