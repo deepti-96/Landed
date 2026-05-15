@@ -27,22 +27,38 @@ export default function StepDrawer({ step, profile, open, onClose }: Props) {
   const [loadingDraft, setLoadingDraft] = useState(false)
   const [copied, setCopied] = useState(false)
   const explanationRef = useRef<HTMLDivElement>(null)
+  const explanationRequestIdRef = useRef(0)
+  const draftRequestIdRef = useRef(0)
+
+  useEffect(() => {
+    return () => {
+      explanationRequestIdRef.current += 1
+      draftRequestIdRef.current += 1
+    }
+  }, [])
 
   useEffect(() => {
     if (open && step) {
       setExplanation('')
       setDraft('')
       setShowDraft(false)
-      loadExplanation()
+      void loadExplanation()
+    } else {
+      explanationRequestIdRef.current += 1
+      draftRequestIdRef.current += 1
     }
   }, [open, step?.id])
 
   const loadExplanation = async () => {
+    const requestId = explanationRequestIdRef.current + 1
+    explanationRequestIdRef.current = requestId
     setLoadingExplanation(true)
     try {
       const session = await getCurrentSession()
       const accessToken = session?.access_token
-      if (!accessToken) throw new Error('No session')
+      if (!accessToken) {
+        throw new Error('Please sign in again to view this explanation.')
+      }
 
       const res = await fetch('/api/explain-step', {
         method: 'POST',
@@ -62,6 +78,7 @@ export default function StepDrawer({ step, profile, open, onClose }: Props) {
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
+        if (requestId !== explanationRequestIdRef.current) return
         text += decoder.decode(value, { stream: true })
         setExplanation(text)
         // Auto-scroll
@@ -70,23 +87,30 @@ export default function StepDrawer({ step, profile, open, onClose }: Props) {
         }
       }
     } catch (error) {
+      if (requestId !== explanationRequestIdRef.current) return
       setExplanation(
         error instanceof Error && error.message
           ? error.message
           : 'Failed to load explanation. Please make sure you are signed in and try again.'
       )
     } finally {
-      setLoadingExplanation(false)
+      if (requestId === explanationRequestIdRef.current) {
+        setLoadingExplanation(false)
+      }
     }
   }
 
   const loadDraft = async () => {
+    const requestId = draftRequestIdRef.current + 1
+    draftRequestIdRef.current = requestId
     setLoadingDraft(true)
     setDraft('')
     try {
       const session = await getCurrentSession()
       const accessToken = session?.access_token
-      if (!accessToken) throw new Error('No session')
+      if (!accessToken) {
+        throw new Error('Please sign in again to generate a draft.')
+      }
 
       const res = await fetch('/api/draft-message', {
         method: 'POST',
@@ -106,17 +130,21 @@ export default function StepDrawer({ step, profile, open, onClose }: Props) {
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
+        if (requestId !== draftRequestIdRef.current) return
         text += decoder.decode(value, { stream: true })
         setDraft(text)
       }
     } catch (error) {
+      if (requestId !== draftRequestIdRef.current) return
       setDraft(
         error instanceof Error && error.message
           ? error.message
           : 'Failed to generate draft. Please make sure you are signed in and try again.'
       )
     } finally {
-      setLoadingDraft(false)
+      if (requestId === draftRequestIdRef.current) {
+        setLoadingDraft(false)
+      }
     }
   }
 
