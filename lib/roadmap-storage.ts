@@ -4,6 +4,11 @@ import { StepWithStatus, UserProfile } from '@/lib/types'
 const PROFILE_KEY = 'landed_profile'
 const PLAN_KEY = 'landed_plan'
 
+function clearLocalRoadmapStorage() {
+  localStorage.removeItem(PROFILE_KEY)
+  localStorage.removeItem(PLAN_KEY)
+}
+
 export interface SavedRoadmap {
   profile: UserProfile
   plan: StepWithStatus[]
@@ -29,6 +34,7 @@ export function loadRoadmapFromLocalStorage(): SavedRoadmap | null {
       plan: JSON.parse(storedPlan) as StepWithStatus[],
     }
   } catch {
+    clearLocalRoadmapStorage()
     return null
   }
 }
