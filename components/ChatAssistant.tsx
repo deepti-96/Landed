@@ -112,7 +112,9 @@ export default function ChatAssistant({ profile, plan }: Props) {
     try {
       const session = await getCurrentSession()
       const accessToken = session?.access_token
-      if (!accessToken) throw new Error('No session')
+      if (!accessToken) {
+        throw new Error('Please sign in again to use the assistant.')
+      }
 
       const res = await fetch('/api/chat-assistant', {
         method: 'POST',
