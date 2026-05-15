@@ -2,7 +2,8 @@ export default function ThemeScript() {
   const script = `
     try {
       var storedTheme = localStorage.getItem('landed-theme');
-      var theme = storedTheme || 'light';
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var theme = storedTheme || (prefersDark ? 'dark' : 'light');
       if (theme === 'dark') {
         document.documentElement.classList.add('dark');
       } else {
