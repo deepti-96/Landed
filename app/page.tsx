@@ -115,16 +115,19 @@ export default function IntakePage() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
+      if (!isMounted) return
       setSession(nextSession)
       if (!nextSession) {
         setAuthChecked(true)
         return
       }
 
+      if (!isMounted) return
       setEmail(nextSession.user.email ?? '')
       setCodeSent(false)
       setOtpCode('')
       const savedRoadmap = await loadRoadmapFromSupabase(supabase, nextSession).catch(() => null)
+      if (!isMounted) return
       if (savedRoadmap) {
         setHasSavedRoadmap(true)
         setProfile(savedRoadmap.profile)
@@ -170,8 +173,9 @@ export default function IntakePage() {
     setAuthLoading(true)
     setAuthMessage('')
 
+    const normalizedEmail = email.trim().toLowerCase()
     const { error } = await supabase.auth.signInWithOtp({
-      email,
+      email: normalizedEmail,
       options: {
         shouldCreateUser: true,
       },
@@ -180,6 +184,7 @@ export default function IntakePage() {
     if (error) {
       setAuthMessage(error.message)
     } else {
+      setEmail(normalizedEmail)
       setCodeSent(true)
       setAuthMessage('A 6-digit sign-in code was sent to your email.')
     }
@@ -202,8 +207,9 @@ export default function IntakePage() {
     setAuthLoading(true)
     setAuthMessage('')
 
+    const normalizedEmail = email.trim().toLowerCase()
     const { error } = await supabase.auth.verifyOtp({
-      email,
+      email: normalizedEmail,
       token: otpCode,
       type: 'email',
     })
@@ -211,6 +217,7 @@ export default function IntakePage() {
     if (error) {
       setAuthMessage(error.message)
     } else {
+      setEmail(normalizedEmail)
       setAuthMessage('Code verified. Your profile is ready below.')
     }
 
