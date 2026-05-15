@@ -1,4 +1,4 @@
-# Landed 
+# Landed
 
 Landed is a Next.js app for international students getting set up in the United States. It turns profile answers into a personalized roadmap with milestones, deadlines, tax guidance, and an in-app assistant.
 
@@ -6,12 +6,14 @@ Landed is a Next.js app for international students getting set up in the United 
 
 - Signs users in with Supabase email OTP
 - Saves profile answers and roadmap data to Supabase and local storage
-- Builds a personalized roadmap for U.S. setup and F-1 style milestones
+- Builds a personalized roadmap for U.S. setup and F-1 milestones
 - Shows a chapter-style roadmap with completed, open, and locked steps
 - Surfaces deadline cards and tax guidance when relevant
 - Lets users open a step drawer for explanations, official links, and draft help
 - Includes an in-app assistant for roadmap questions and next-step guidance
 - Supports light mode and dark mode
+- Requires signed-in users for AI assistant, explanation, and draft-generation features
+- Validates roadmap and AI request payloads before generating responses
 
 ## Current scope
 
@@ -24,6 +26,16 @@ It is built around:
 - tax reminders and guidance
 - contextual assistant help
 
+Current supported roadmap type:
+- F-1
+
+Shown but not yet supported:
+- J-1
+- H-1B
+- O-1
+- L-1
+- Other
+
 It does not currently handle filing or submitting forms.
 
 ## Tech stack
@@ -32,7 +44,7 @@ It does not currently handle filing or submitting forms.
 - TypeScript
 - Tailwind CSS
 - Supabase Auth and storage
-- Groq SDK for explanation and draft-generation APIs
+- Groq SDK for assistant, explanation, and draft-generation APIs
 - Lucide React icons
 
 ## Local setup
@@ -70,7 +82,7 @@ In Supabase:
 2. Enable email sign-in / OTP
 3. Set `Site URL` to `http://localhost:3000`
 4. Add `http://localhost:3000` to redirect URLs
-5. Run the SQL in [supabase-schema.sql](/Users/deepti.r.kumar/Desktop/Documents/Projects/landed/supabase-schema.sql) in the SQL Editor
+5. Run the SQL in [supabase-schema.sql](/Users/deepti.r.kumar/Desktop/Documents/Projects/Landed/supabase-schema.sql) in the SQL Editor
 
 ### 4. Start the app 
 
@@ -129,7 +141,11 @@ landed/
 ├── data/
 │   └── f1-steps.json
 ├── lib/
+│   ├── ai-validation.ts
+│   ├── api-auth.ts
+│   ├── api-client.ts
 │   ├── deadlines.ts
+│   ├── profile-validation.ts
 │   ├── roadmap-storage.ts
 │   ├── supabase.ts
 │   ├── tax.ts
@@ -140,10 +156,13 @@ landed/
 ## Notes about roadmap logic
 
 - Roadmap generation is deterministic in the API route
+- Only supported visa types can generate a roadmap, and the current roadmap flow is F-1 only
 - Saved profile answers affect which steps are done, open now, or blocked
 - OPT timing uses graduation date
 - ITIN should not appear when the user already has an SSN
 - Tax suggestions depend on whether the user was in the U.S. during the last tax year and whether they had U.S. income
+- Tax cards distinguish between upcoming, due-now, and overdue filing windows
+- AI endpoints require a signed-in user token and apply a basic per-user rate limit
 
 ## Deployment
 
@@ -163,6 +182,14 @@ Typical deployment flow:
 
 Wait before requesting another OTP code. Repeated local testing can hit Supabase auth email rate limits quickly.
 
+### AI route says Unauthorized
+
+The assistant, step explanation, and draft endpoints require a valid signed-in Supabase session. Sign in again if the client session has expired.
+
+### AI route says Too many requests
+
+The AI endpoints apply a short per-user rate limit. Wait about a minute and try again.
+
 ### Next.js missing chunk or CSS 404 errors in local dev
 
 Clear the local Next build cache and restart:
@@ -178,4 +205,4 @@ npm run dev
 
 ## Environment example
 
-See [.env.example](/Users/deepti.r.kumar/Desktop/Documents/Projects/landed/.env.example).
+See [.env.example](/Users/deepti.r.kumar/Desktop/Documents/Projects/Landed/.env.example).
